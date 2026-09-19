@@ -4,16 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fly by Wire</title>
+    <!-- Pixel font is decoration only: without the network the UI falls back to monospace. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <div id="app">
-      <div id="brain-pane" class="pane"></div>
-      <div id="arena-pane" class="pane"></div>
+    <div id="stage">
+      <div id="app">
+        <div id="brain-pane" class="pane"></div>
+        <div id="arena-pane" class="pane"></div>
+      </div>
+      <div id="brand">Fly by Wire</div>
+      <div id="hud"></div>
+      <div id="notebook" class="hidden"></div>
+      <div id="hint">
+        <span>drag to orbit the brain</span>
+        <span>click the lit hotspot</span>
+      </div>
+      <div id="overlay" class="hidden"></div>
     </div>
-    <div id="hud"></div>
-    <div id="notebook" class="hidden"></div>
-    <div id="overlay" class="hidden"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

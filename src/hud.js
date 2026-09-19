@@ -116,13 +116,14 @@ export function createHud() {
     // ---- Notebook ----
     setNotebookVisible(visible) {
       notebook.classList.toggle('hidden', !visible);
-      if (visible) notebook.classList.add('open');
+      notebook.classList.remove('open'); // stays collapsed to its tab until the first probe is recorded
     },
 
     // One card per hotspot: the first probe's snapshots, the text, and a repeat count.
     recordProbe(id, text, count) {
       let c = cards.get(id);
       if (!c) {
+        notebook.classList.add('open');
         nbEmpty.remove();
         c = { root: el('div', 'nb-card'), imgs: el('div', 'nb-imgs'), count: el('span', 'nb-count') };
         c.brain = el('img');
