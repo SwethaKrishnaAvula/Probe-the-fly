@@ -8,15 +8,22 @@ import { createBehaviorRunner } from './behaviors.js';
 import { createNeuronPair } from './neuronPath.js';
 import { createHud } from './hud.js';
 
-import meta from '../game_data/geometry/geometry_metadata.json';
-import handoff from '../path_jsons/DNa02_L_handoff.json';
-import glbUrl from '../game_data/geometry/DNa02_L_523769_to_801548.glb?url';
-import swcDnUrl from '../game_data/geometry/523769.swc?url';
-import swcMnUrl from '../game_data/geometry/801548.swc?url';
+// Left pair (turn_left) and right pair (turn_right), straight from the repo's geometry and handoff files.
+// The right handoff's pulse timing is the filled version from the filling-json branch (main still has nulls).
+import metaL from '../game_data/geometry/DNa02_L_projection/geometry_metadata.json';
+import handoffL from '../path_jsons/DNa02_L_handoff.json';
+import glbLUrl from '../game_data/geometry/DNa02_L_projection/DNa02_L_523769_to_801548.glb?url';
+import swcL1Url from '../game_data/geometry/DNa02_L_projection/523769.swc?url';
+import swcL2Url from '../game_data/geometry/DNa02_L_projection/801548.swc?url';
+import metaR from '../game_data/geometry/DNa02_R_projection/geometry_metadata_right.json';
+import handoffR from '../path_jsons/math_filled/DNa02_R_handoff.json';
+import glbRUrl from '../game_data/geometry/DNa02_R_projection/DNa02_R_10360_801946.glb?url';
+import swcR1Url from '../game_data/geometry/DNa02_R_projection/10360.swc?url';
+import swcR2Url from '../game_data/geometry/DNa02_R_projection/801946.swc?url';
 
-// Branch game_turn_right test screen. Left: the DNa02_L neuron and the motor neuron it drives (anterior
-// on the left). Right: the arena with the fly. Click the hotspot: light travels down the path, then the
-// fly turns left. The world and HUD come from levels.json (open ?level=1..5 to see each level's world);
+// Branch game_turn_right test screen. Left: the DNa02_L and DNa02_R neurons, each with the motor neuron it
+// drives (anterior on the left). Right: the arena with the fly. Click a hotspot: light travels down its path,
+// then the fly turns left (DNa02_L) or right (DNa02_R). The world and HUD come from levels.json (open ?level=1..5 to see each level's world);
 // the level rules in game.js and the placeholder brain.js are not loaded here.
 const brainPane = createPane(document.getElementById('brain-pane'), { position: [0, 4, 21], background: 0x11162a });
 // The arena camera sits behind the fly's start, looking down the +z direction the fly faces, so the
@@ -109,31 +116,42 @@ async function loadLevel() {
 
 async function boot() {
   const game = await loadLevel();
-  const neurons = await createNeuronPair({
-    urls: { glb: glbUrl, swc: { 523769: swcDnUrl, 801548: swcMnUrl } },
-    meta,
-    handoff,
-  });
-  brainPane.scene.add(neurons.group);
+  // The left pair defines the shared frame; the right pair is moved into it.
+  const pairs = [
+    await createNeuronPair({
+      urls: { glb: glbLUrl, swc: { 523769: swcL1Url, 801548: swcL2Url } },
+      meta: metaL,
+      handoff: handoffL,
+    }),
+    await createNeuronPair({
+      urls: { glb: glbRUrl, swc: { 10360: swcR1Url, 801946: swcR2Url } },
+      meta: metaR,
+      handoff: handoffR,
+      reference: metaL.normalization,
+    }),
+  ];
+  pairs.forEach((p) => brainPane.scene.add(p.group));
+  const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));
 
   createPicker({
     domElement: brainPane.domElement,
     camera: brainPane.camera,
-    getTargets: () => [neurons.hotspotMesh],
+    getTargets: () => pairs.map((p) => p.hotspotMesh),
     onPick: (hotspotId) => {
       console.log('hotspot clicked:', hotspotId);
-      if (neurons.busy || runner.current) return; // one probe at a time
-      game.onProbe(neurons.behaviorId);
-      neurons.firePulse(() => runner.start(neurons.behaviorId));
+      const pair = pairById.get(hotspotId);
+      if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
+      game.onProbe(pair.behaviorId);
+      pair.firePulse(() => runner.start(pair.behaviorId));
     },
-    onHover: (hotspotId) => neurons.setHover(hotspotId !== null),
+    onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
   });
 
   const clock = new THREE.Clock();
   brainPane.renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
     controls.update();
-    neurons.update(dt * 1000);
+    pairs.forEach((p) => p.update(dt * 1000));
     runner.update(dt * 1000);
     fly.update(dt);
     brainPane.renderer.render(brainPane.scene, brainPane.camera);
@@ -142,7 +160,7 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, neurons, fly, runner, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, pairs, fly, runner, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
 }
 

@@ -62,8 +62,13 @@ async function fetchText(url) {
 }
 
 // urls: { glb, swc: { [bodyId]: url } }. meta and handoff are the parsed json files.
-export async function createNeuronPair({ urls, meta, handoff }) {
+// reference: another pair's metadata.normalization. Each pair was normalized on its own (its own center and
+// scale), so to show two pairs in one brain this pair is moved into the reference pair's frame. Both come
+// from the same dataset space, so this is an exact similarity transform, not an estimate.
+export async function createNeuronPair({ urls, meta, handoff, reference = null }) {
   const group = new THREE.Group();
+  const inner = new THREE.Group(); // holds the meshes and hotspot; carries the frame alignment
+  group.add(inner);
   const byId = {};
   meta.neurons.forEach((n) => (byId[n.body_id] = { info: n }));
 
@@ -103,8 +108,19 @@ export async function createNeuronPair({ urls, meta, handoff }) {
     mesh.geometry.setAttribute('aU', new THREE.BufferAttribute(vertexProgress(n.grid, geo, vertexPos), 1));
     mesh.material = makeMaterial(n.info.color_rgba);
     n.material = mesh.material;
-    group.add(mesh);
+    inner.add(mesh);
   });
+
+  // Move into the reference frame: shared = pair * (sRef / s) + swap(c - cRef) * sRef, with the .glb's
+  // (x, z, -y) axis order. (Verified for the right pair: its nodes and hotspot still land on its tubes.)
+  let fit = 1; // the scale applied, so the click sphere can be corrected to stay exactly the requested size
+  if (reference) {
+    const { center_native: c, scale: s } = meta.normalization;
+    const { center_native: cr, scale: sr } = reference;
+    fit = sr / s;
+    inner.scale.setScalar(fit);
+    inner.position.set((c[0] - cr[0]) * sr, (c[2] - cr[2]) * sr, -(c[1] - cr[1]) * sr);
+  }
 
   // Anterior (the brain end, at -Y in the file) goes to the left of the screen.
   group.rotation.z = -Math.PI / 2;
@@ -114,12 +130,12 @@ export async function createNeuronPair({ urls, meta, handoff }) {
   const hs = byId[ids[0]].info;
   const [hx, hy, hz] = hs.hotspot_center_game;
   const hotspot = new THREE.Mesh(
-    new THREE.SphereGeometry(hs.suggested_hit_radius, 16, 12),
+    new THREE.SphereGeometry(hs.suggested_hit_radius / fit, 16, 12), // /fit: exactly 0.5 in the shared frame
     new THREE.MeshBasicMaterial({ visible: false }),
   );
   hotspot.position.set(hx, hz, -hy);
   hotspot.userData.hotspotId = meta.game_mapping.hotspot_id;
-  group.add(hotspot);
+  inner.add(hotspot);
 
   // Pulse schedule from the handoff.
   const timing = handoff.math_outputs.pulse_timing.map((t) => ({
