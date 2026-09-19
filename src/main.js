@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createPane } from './pane.js';
 import { createFly } from './fly.js';
 import { createPicker } from './picking.js';
+import { createSkeletonLine } from './skeleton.js';
 
 // Left: brain (orbit). Right: arena with the fly.
 const brain = createPane(document.getElementById('brain-pane'), { position: [3, 3, 5] });
@@ -11,17 +12,21 @@ const arena = createPane(document.getElementById('arena-pane'), { position: [0, 
 const controls = new OrbitControls(brain.camera, brain.domElement);
 controls.enableDamping = true;
 
-// Placeholder: real neurons replace this cube once the geometry file arrives.
-// The cube stands in for one hotspot; the id is fake and not from hotspots.json.
-const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshNormalMaterial());
-cube.userData.hotspotId = 'hs_placeholder';
-brain.scene.add(cube);
+// Placeholder: real neuron skeletons replace this once the geometry file arrives.
+// One fake skeleton stands in for one hotspot; the id is fake and not from hotspots.json.
+const fakeSkeleton = [];
+for (let i = 0; i <= 40; i++) {
+  const t = i / 40;
+  fakeSkeleton.push([Math.sin(t * 6) * 0.8, (t - 0.5) * 2.4, Math.cos(t * 5) * 0.6]);
+}
+const skeleton = createSkeletonLine(fakeSkeleton, { hotspotId: 'hs_placeholder' });
+brain.scene.add(skeleton);
 
-const hotspotMeshes = [cube];
+const hotspotObjects = [skeleton];
 createPicker({
   domElement: brain.domElement,
   camera: brain.camera,
-  getTargets: () => hotspotMeshes,
+  getTargets: () => hotspotObjects,
   onPick: (hotspotId) => console.log('hotspot clicked:', hotspotId),
 });
 

@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 
-// Click picking for the brain pane. A mesh is a hotspot if its userData.hotspotId is set.
-// Only real clicks count: dragging to orbit the brain must not fire a probe.
+// Click picking for the brain pane. Neurons are skeletons (lines), and an object is a hotspot
+// if its userData.hotspotId is set. Only real clicks count: dragging to orbit must not fire a probe.
 const CLICK_MAX_MOVE_PX = 5;
+const LINE_PICK_RADIUS = 0.06; // world units: how close a click must be to a skeleton line
 
 export function createPicker({ domElement, camera, getTargets, onPick }) {
   const raycaster = new THREE.Raycaster();
+  raycaster.params.Line.threshold = LINE_PICK_RADIUS;
   const pointer = new THREE.Vector2();
   let down = null;
 
