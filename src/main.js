@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createPane } from './pane.js';
 import { createFly } from './fly.js';
+import { createPicker } from './picking.js';
 
 // Left: brain (orbit). Right: arena with the fly.
 const brain = createPane(document.getElementById('brain-pane'), { position: [3, 3, 5] });
@@ -11,8 +12,18 @@ const controls = new OrbitControls(brain.camera, brain.domElement);
 controls.enableDamping = true;
 
 // Placeholder: real neurons replace this cube once the geometry file arrives.
+// The cube stands in for one hotspot; the id is fake and not from hotspots.json.
 const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshNormalMaterial());
+cube.userData.hotspotId = 'hs_placeholder';
 brain.scene.add(cube);
+
+const hotspotMeshes = [cube];
+createPicker({
+  domElement: brain.domElement,
+  camera: brain.camera,
+  getTargets: () => hotspotMeshes,
+  onPick: (hotspotId) => console.log('hotspot clicked:', hotspotId),
+});
 
 // Arena: ground grid, lights, fly.
 arena.scene.add(new THREE.GridHelper(20, 40, 0x3a4152, 0x22283a));
