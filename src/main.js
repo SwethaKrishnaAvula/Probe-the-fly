@@ -3,15 +3,20 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createPane } from './pane.js';
 import { createFly } from './fly.js';
 import { createPicker } from './picking.js';
-import { createBrain } from './brain.js';
 import { createArena } from './arena.js';
 import { createBehaviorRunner } from './behaviors.js';
-import { createHud } from './hud.js';
-import { createGame } from './game.js';
+import { createNeuronPair } from './neuronPath.js';
 
-// Left: brain (orbit, click hotspots). Right: arena with the fly. The game itself runs from
-// levels.json and never talks to a backend, so it plays fine offline (read.md rules 2 and 3).
-const brainPane = createPane(document.getElementById('brain-pane'), { position: [3, 3, 5] });
+import meta from '../game_data/geometry/geometry_metadata.json';
+import handoff from '../path_jsons/DNa02_L_handoff.json';
+import glbUrl from '../game_data/geometry/DNa02_L_523769_to_801548.glb?url';
+import swcDnUrl from '../game_data/geometry/523769.swc?url';
+import swcMnUrl from '../game_data/geometry/801548.swc?url';
+
+// Branch game_turn_right test screen. Left: the DNa02_L neuron and the motor neuron it drives (anterior
+// on the left). Right: the arena with the fly. Click the hotspot: light travels down the path, then the
+// fly turns left. The full level flow (game.js, levels.json, brain.js) stays in the repo but is not loaded here.
+const brainPane = createPane(document.getElementById('brain-pane'), { position: [0, 4, 21] });
 // The arena camera sits behind the fly's start, looking down the +z direction the fly faces, so the
 // player's left and right match the fly's.
 const arenaPane = createPane(document.getElementById('arena-pane'), { position: [0, 13.5, -4.5] });
@@ -20,72 +25,49 @@ arenaPane.camera.lookAt(0, 0, 2.3);
 const controls = new OrbitControls(brainPane.camera, brainPane.domElement);
 controls.enableDamping = true;
 
-const brain = createBrain(brainPane.scene);
 const arena = createArena(arenaPane.scene);
+arena.configure(null);
 const fly = createFly();
 arenaPane.scene.add(fly.object);
 const runner = createBehaviorRunner(fly, arena.world);
-const hud = createHud();
 
-// Notebook snapshots: grab a thumbnail of a canvas right after it renders (the WebGL buffer is only
-// readable in the same frame it was drawn).
-const THUMB_W = 200;
-const thumbCanvas = document.createElement('canvas');
-const captureQueue = [];
-function capture(which, cb) {
-  captureQueue.push({ pane: which === 'brain' ? brainPane : arenaPane, cb });
-}
-function flushCaptures() {
-  while (captureQueue.length) {
-    const { pane, cb } = captureQueue.shift();
-    const src = pane.domElement;
-    if (!src.width) continue;
-    thumbCanvas.width = THUMB_W;
-    thumbCanvas.height = Math.round((THUMB_W * src.height) / src.width);
-    thumbCanvas.getContext('2d').drawImage(src, 0, 0, thumbCanvas.width, thumbCanvas.height);
-    cb(thumbCanvas.toDataURL('image/jpeg', 0.7));
-  }
-}
+// The old level HUD is not used on this screen.
+document.getElementById('hud').classList.add('hidden');
 
 async function boot() {
-  const data = await fetch('/data/levels.json').then((r) => r.json());
-  // Weak-spot levels are generated at runtime from task_templates.json, not authored here.
-  const levels = data.levels.filter((l) => l.type !== 'weak_spot');
-  const entries = data.hotspot_notebook_entries;
-
-  const game = createGame({ levels, entries, brain, arena, fly, runner, hud, capture });
+  const neurons = await createNeuronPair({
+    urls: { glb: glbUrl, swc: { 523769: swcDnUrl, 801548: swcMnUrl } },
+    meta,
+    handoff,
+  });
+  brainPane.scene.add(neurons.group);
 
   createPicker({
     domElement: brainPane.domElement,
     camera: brainPane.camera,
-    getTargets: () => brain.pickables(),
-    onPick: (hotspotId) => game.onPick(hotspotId),
-    onHover: (hotspotId) => brain.setHover(hotspotId),
+    getTargets: () => [neurons.hotspotMesh],
+    onPick: (hotspotId) => {
+      console.log('hotspot clicked:', hotspotId);
+      if (neurons.busy || runner.current) return; // one probe at a time
+      neurons.firePulse(() => runner.start(neurons.behaviorId));
+    },
+    onHover: (hotspotId) => neurons.setHover(hotspotId !== null),
   });
-
-  game.start();
-
-  // Dev-only test keys (open the page with ?debug). The real game has no movement buttons.
-  if (new URLSearchParams(location.search).has('debug')) {
-    const keys = { w: ['walk', 1], s: ['walk', -1], a: ['turn', 1], d: ['turn', -1], ' ': ['stop', 1] };
-    window.addEventListener('keydown', (e) => {
-      const k = keys[e.key.toLowerCase()];
-      if (k) fly.setAction(...k);
-    });
-    window.__dev = { THREE, game, brain, camera: brainPane.camera, canvas: brainPane.domElement };
-  }
 
   const clock = new THREE.Clock();
   brainPane.renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
     controls.update();
-    game.update(dt * 1000);
-    brain.update(dt * 1000);
+    neurons.update(dt * 1000);
+    runner.update(dt * 1000);
     fly.update(dt);
     brainPane.renderer.render(brainPane.scene, brainPane.camera);
     arenaPane.renderer.render(arenaPane.scene, arenaPane.camera);
-    flushCaptures();
   });
+
+  if (new URLSearchParams(location.search).has('debug')) {
+    window.__dev = { THREE, neurons, fly, runner, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+  }
 }
 
 boot();
