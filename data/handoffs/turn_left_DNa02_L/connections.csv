@@ -1,0 +1,2 @@
+bodyId_pre,bodyId_post,weight,type_pre,type_post,instance_pre,instance_post,status_pre,status_post,cropped_pre,cropped_post,conn_roiInfo,roi_names
+523769,801548,106,DNa02,Sternal anterior rotator MN,DNa02_L,Sternal anterior rotator MN_L,Traced,Traced,,,"{'LegNp(T3)(L)': {'post': 106}, 'VNC': {'post': 106}}","['LegNp(T3)(L)', 'VNC']"
