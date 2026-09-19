@@ -25,6 +25,22 @@ arenaPane.camera.lookAt(0, 0, 2.3);
 const controls = new OrbitControls(brainPane.camera, brainPane.domElement);
 controls.enableDamping = true;
 
+// Keep the whole neuron (about 20 units long, 8 tall) in view whatever the pane's shape, by moving the
+// camera along its current line of sight. Runs on load and when the pane is resized, not while orbiting.
+const FIT_HALF_WIDTH = 12; // neuron half-length 10, plus margin
+const FIT_HALF_HEIGHT = 5;
+function fitBrainCamera() {
+  const el = document.getElementById('brain-pane');
+  const cam = brainPane.camera;
+  const tanHalf = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+  const aspect = el.clientWidth / el.clientHeight;
+  const dist = Math.max(FIT_HALF_WIDTH / (tanHalf * aspect), FIT_HALF_HEIGHT / tanHalf);
+  const dir = cam.position.clone().sub(controls.target).normalize();
+  cam.position.copy(controls.target).addScaledVector(dir, dist);
+}
+new ResizeObserver(fitBrainCamera).observe(document.getElementById('brain-pane'));
+fitBrainCamera();
+
 const arena = createArena(arenaPane.scene);
 arena.configure(null);
 const fly = createFly();
