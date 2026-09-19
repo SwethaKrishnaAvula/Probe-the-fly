@@ -1,0 +1,28 @@
+{
+  "hotspot_id": "turn_right_DNa02_R",
+  "body_ids": [
+    "10360",
+    "801946"
+  ],
+  "swc_files": {
+    "10360": "10360.swc",
+    "801946": "801946.swc"
+  },
+  "colors": {
+    "10360": [
+      0.05,
+      0.8,
+      0.2,
+      1.0
+    ],
+    "801946": [
+      0.9,
+      0.05,
+      0.55,
+      1.0
+    ]
+  },
+  "output_glb": "turn_right_DNa02_R.glb",
+  "target_size": 20.0,
+  "tube_radius": 0.025
+}

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "DNa02_R_10360_801946.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [41152.0, 43392.0, 69216.0],
+    "scale": 0.0001839317245438493,
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "10360",
+      "name": "DNa02_R",
+      "role": "clickable_hotspot",
+      "glb_object_name": "10360",
+      "swc_file": "10360.swc",
+      "color_rgba": [0.05, 0.8, 0.2, 1.0],
+      "hotspot_center_game": [
+        -1.3708431430,
+        -4.5037522072,
+        -9.8326221307
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "801946",
+      "name": "Sternal anterior rotator MN_R",
+      "role": "motor_output",
+      "glb_object_name": "801946",
+      "swc_file": "801946.swc",
+      "color_rgba": [0.9, 0.05, 0.55, 1.0]
+    }
+  ],
+  "connection": {
+    "source_body_id": "10360",
+    "target_body_id": "801946",
+    "weight": 134,
+    "roi": "LegNp(T2)(R)",
+    "direction": "10360_to_801946"
+  },
+  "game_mapping": {
+    "hotspot_id": "hs_DNa02_R",
+    "behavior_id": "turn_right",
+    "pulse_order": ["10360", "801946"],
+    "branch_level_pulse_source": "swc"
+  }
+}
