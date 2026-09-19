@@ -8,6 +8,25 @@ body,
   background: #0b0d12;
 }
 
+#app {
+  display: flex;
+}
+
+.pane {
+  flex: 1 1 50%;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+}
+
+.pane + .pane {
+  border-left: 1px solid #22283a;
+}
+
+/* Absolute so the canvas never props the pane open when the window shrinks. */
 canvas {
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
