@@ -30,3 +30,205 @@ canvas {
   top: 0;
   left: 0;
 }
+
+/* ---- Game UI over the two panes ---- */
+:root {
+  --ui-bg: rgba(11, 13, 18, 0.82);
+  --ui-line: #2a3147;
+  --ui-text: #e6e9f2;
+  --ui-dim: #8b93a8;
+  --ui-accent: #6fa8ff;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ui-text);
+}
+
+.hidden {
+  display: none !important;
+}
+
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 16px;
+  background: var(--ui-bg);
+  border-bottom: 1px solid var(--ui-line);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hud-title {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hud-goal {
+  flex: 1;
+  color: var(--ui-dim);
+  min-width: 0;
+}
+
+.hud-stat {
+  white-space: nowrap;
+}
+
+.hud-label {
+  color: var(--ui-dim);
+  margin-right: 6px;
+  font-size: 13px;
+}
+
+.hud-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+button {
+  font: inherit;
+  color: var(--ui-text);
+  background: #1a2032;
+  border: 1px solid var(--ui-line);
+  border-radius: 6px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--ui-accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
+  color: #0b0d12;
+  font-weight: 600;
+}
+
+.hud-action {
+  pointer-events: auto;
+}
+
+/* Notebook drawer: bottom of the screen, collapsed to its tab until opened. */
+#notebook {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  background: var(--ui-bg);
+  border-top: 1px solid var(--ui-line);
+}
+
+.nb-tab {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  transform: translateY(-100%);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: var(--ui-bg);
+}
+
+.nb-imgs img:not([src]) {
+  visibility: hidden;
+}
+
+.nb-body {
+  display: none;
+  gap: 10px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  height: 190px;
+  box-sizing: border-box;
+}
+
+#notebook.open .nb-body {
+  display: flex;
+}
+
+.nb-empty {
+  color: var(--ui-dim);
+  align-self: center;
+}
+
+.nb-card {
+  flex: 0 0 210px;
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+  background: rgba(20, 25, 38, 0.9);
+}
+
+.nb-imgs {
+  display: flex;
+  gap: 4px;
+}
+
+.nb-imgs img {
+  width: 50%;
+  min-height: 40px;
+  background: #0b0d12;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.nb-card p {
+  margin: 6px 0 2px;
+}
+
+.nb-count {
+  color: var(--ui-dim);
+  font-size: 12px;
+}
+
+/* Intro and result cards. */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 10, 0.6);
+}
+
+.card {
+  max-width: 440px;
+  padding: 26px 30px;
+  background: #121725;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+.card h2 {
+  margin: 0 0 10px;
+}
+
+.card p {
+  margin: 8px 0;
+}
+
+.card .goal {
+  color: var(--ui-accent);
+  font-weight: 600;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}

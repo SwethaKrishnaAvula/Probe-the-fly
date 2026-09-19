@@ -5,7 +5,7 @@ import * as THREE from 'three';
 const CLICK_MAX_MOVE_PX = 5;
 const LINE_PICK_RADIUS = 0.06; // world units: how close a click must be to a skeleton line
 
-export function createPicker({ domElement, camera, getTargets, onPick }) {
+export function createPicker({ domElement, camera, getTargets, onPick, onHover }) {
   const raycaster = new THREE.Raycaster();
   raycaster.params.Line.threshold = LINE_PICK_RADIUS;
   const pointer = new THREE.Vector2();
@@ -15,17 +15,37 @@ export function createPicker({ domElement, camera, getTargets, onPick }) {
     down = { x: e.clientX, y: e.clientY };
   });
 
+  function firstHit(e) {
+    const rect = domElement.getBoundingClientRect();
+    pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    raycaster.setFromCamera(pointer, camera);
+    return raycaster.intersectObjects(getTargets(), false)[0];
+  }
+
   domElement.addEventListener('pointerup', (e) => {
     if (!down) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     down = null;
     if (moved > CLICK_MAX_MOVE_PX) return;
 
-    const rect = domElement.getBoundingClientRect();
-    pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
-    raycaster.setFromCamera(pointer, camera);
-
-    const hit = raycaster.intersectObjects(getTargets(), false)[0];
+    const hit = firstHit(e);
     if (hit) onPick(hit.object.userData.hotspotId, hit);
   });
+
+  // Hover highlight only (no labels, so it never gives the answer away). Skipped while orbiting.
+  if (onHover) {
+    let hovered = null;
+    const setHovered = (id) => {
+      if (id === hovered) return;
+      hovered = id;
+      domElement.style.cursor = id ? 'pointer' : '';
+      onHover(id);
+    };
+    domElement.addEventListener('pointermove', (e) => {
+      if (e.buttons) return setHovered(null);
+      const hit = firstHit(e);
+      setHovered(hit ? hit.object.userData.hotspotId : null);
+    });
+    domElement.addEventListener('pointerleave', () => setHovered(null));
+  }
 }

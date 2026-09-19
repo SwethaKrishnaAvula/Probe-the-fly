@@ -3,65 +3,89 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createPane } from './pane.js';
 import { createFly } from './fly.js';
 import { createPicker } from './picking.js';
-import { createSkeletonLine } from './skeleton.js';
+import { createBrain } from './brain.js';
+import { createArena } from './arena.js';
+import { createBehaviorRunner } from './behaviors.js';
+import { createHud } from './hud.js';
+import { createGame } from './game.js';
 
-// Left: brain (orbit). Right: arena with the fly.
-const brain = createPane(document.getElementById('brain-pane'), { position: [3, 3, 5] });
-const arena = createPane(document.getElementById('arena-pane'), { position: [0, 3.5, 4.5] });
+// Left: brain (orbit, click hotspots). Right: arena with the fly. The game itself runs from
+// levels.json and never talks to a backend, so it plays fine offline (read.md rules 2 and 3).
+const brainPane = createPane(document.getElementById('brain-pane'), { position: [3, 3, 5] });
+// The arena camera sits behind the fly's start, looking down the +z direction the fly faces, so the
+// player's left and right match the fly's.
+const arenaPane = createPane(document.getElementById('arena-pane'), { position: [0, 13.5, -4.5] });
+arenaPane.camera.lookAt(0, 0, 2.3);
 
-const controls = new OrbitControls(brain.camera, brain.domElement);
+const controls = new OrbitControls(brainPane.camera, brainPane.domElement);
 controls.enableDamping = true;
 
-// Placeholder: real neuron skeletons replace this once the geometry file arrives.
-// One fake skeleton stands in for one hotspot; the id is fake and not from hotspots.json.
-const fakeSkeleton = [];
-for (let i = 0; i <= 40; i++) {
-  const t = i / 40;
-  fakeSkeleton.push([Math.sin(t * 6) * 0.8, (t - 0.5) * 2.4, Math.cos(t * 5) * 0.6]);
-}
-const skeleton = createSkeletonLine(fakeSkeleton, { hotspotId: 'hs_placeholder' });
-brain.scene.add(skeleton);
-
-const hotspotObjects = [skeleton];
-createPicker({
-  domElement: brain.domElement,
-  camera: brain.camera,
-  getTargets: () => hotspotObjects,
-  onPick: (hotspotId) => console.log('hotspot clicked:', hotspotId),
-});
-
-// Arena: ground grid, lights, fly.
-arena.scene.add(new THREE.GridHelper(20, 40, 0x3a4152, 0x22283a));
-arena.scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 1.4));
-const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-sun.position.set(3, 6, 2);
-arena.scene.add(sun);
-arena.camera.lookAt(0, 0, 0);
-
+const brain = createBrain(brainPane.scene);
+const arena = createArena(arenaPane.scene);
 const fly = createFly();
-arena.scene.add(fly.object);
+arenaPane.scene.add(fly.object);
+const runner = createBehaviorRunner(fly, arena.world);
+const hud = createHud();
 
-// Dev-only test keys (open the page with ?debug). The real game has no movement buttons:
-// behaviors will be triggered by clicking hotspots on the brain.
-if (new URLSearchParams(location.search).has('debug')) {
-  const keys = {
-    w: ['walk', 1],
-    s: ['walk', -1],
-    a: ['turn', 1],
-    d: ['turn', -1],
-    ' ': ['stop', 1],
-  };
-  window.addEventListener('keydown', (e) => {
-    const k = keys[e.key.toLowerCase()];
-    if (k) fly.setAction(...k);
+// Notebook snapshots: grab a thumbnail of a canvas right after it renders (the WebGL buffer is only
+// readable in the same frame it was drawn).
+const THUMB_W = 200;
+const thumbCanvas = document.createElement('canvas');
+const captureQueue = [];
+function capture(which, cb) {
+  captureQueue.push({ pane: which === 'brain' ? brainPane : arenaPane, cb });
+}
+function flushCaptures() {
+  while (captureQueue.length) {
+    const { pane, cb } = captureQueue.shift();
+    const src = pane.domElement;
+    if (!src.width) continue;
+    thumbCanvas.width = THUMB_W;
+    thumbCanvas.height = Math.round((THUMB_W * src.height) / src.width);
+    thumbCanvas.getContext('2d').drawImage(src, 0, 0, thumbCanvas.width, thumbCanvas.height);
+    cb(thumbCanvas.toDataURL('image/jpeg', 0.7));
+  }
+}
+
+async function boot() {
+  const data = await fetch('/data/levels.json').then((r) => r.json());
+  // Weak-spot levels are generated at runtime from task_templates.json, not authored here.
+  const levels = data.levels.filter((l) => l.type !== 'weak_spot');
+  const entries = data.hotspot_notebook_entries;
+
+  const game = createGame({ levels, entries, brain, arena, fly, runner, hud, capture });
+
+  createPicker({
+    domElement: brainPane.domElement,
+    camera: brainPane.camera,
+    getTargets: () => brain.pickables(),
+    onPick: (hotspotId) => game.onPick(hotspotId),
+    onHover: (hotspotId) => brain.setHover(hotspotId),
+  });
+
+  game.start();
+
+  // Dev-only test keys (open the page with ?debug). The real game has no movement buttons.
+  if (new URLSearchParams(location.search).has('debug')) {
+    const keys = { w: ['walk', 1], s: ['walk', -1], a: ['turn', 1], d: ['turn', -1], ' ': ['stop', 1] };
+    window.addEventListener('keydown', (e) => {
+      const k = keys[e.key.toLowerCase()];
+      if (k) fly.setAction(...k);
+    });
+    window.__dev = { THREE, game, brain, camera: brainPane.camera, canvas: brainPane.domElement };
+  }
+
+  const clock = new THREE.Clock();
+  brainPane.renderer.setAnimationLoop(() => {
+    const dt = Math.min(clock.getDelta(), 0.1);
+    controls.update();
+    game.update(dt * 1000);
+    brain.update(dt * 1000);
+    fly.update(dt);
+    brainPane.renderer.render(brainPane.scene, brainPane.camera);
+    arenaPane.renderer.render(arenaPane.scene, arenaPane.camera);
+    flushCaptures();
   });
 }
 
-const clock = new THREE.Clock();
-brain.renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.1);
-  controls.update();
-  fly.update(dt);
-  brain.renderer.render(brain.scene, brain.camera);
-  arena.renderer.render(arena.scene, arena.camera);
-});
+boot();
