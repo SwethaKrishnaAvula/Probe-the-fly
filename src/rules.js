@@ -66,10 +66,12 @@ export function createRules(ctx) {
   }
 
   // Start level i: a new level begins on its original layout, a retry passes the layout and attempt it wants.
-  function go(i, v = 0, n = 1) {
+  // quick: a retry. The fly does not fly in again and there is no level card: play starts at once.
+  function go(i, v = 0, n = 1, quick = false) {
     variant = v;
     attempt = n;
-    ctx.enterLevel(i, { variant: v, attempt: n });
+    hud.hideOverlay(); // the result card goes at once, so the button cannot be pressed twice
+    ctx.enterLevel(i, { variant: v, attempt: n, quick });
   }
 
   function nextLevel() {
@@ -86,7 +88,9 @@ export function createRules(ctx) {
   function retry() {
     score -= lastGain; // a replayed win must not count twice
     const next = lastOutcome === 'loss' ? (variant + 1) % layoutCount(level.id) : variant;
-    go(idx, next, attempt + 1);
+    const rearranged = next !== variant;
+    go(idx, next, attempt + 1, true);
+    if (rearranged) hud.toast('The kitchen has been rearranged. Same hotspots, new obstacles.', 3800);
   }
 
   // Record how this attempt ended (once): to Tiger, with the layout it was played on.
@@ -263,13 +267,15 @@ export function createRules(ctx) {
       refreshAction();
     },
 
-    // The fly has landed: show the level card, then play.
-    begin() {
-      hud.showIntro(level, () => {
+    // The fly has landed: show the level card, then play. direct (a retry): no card, play now.
+    begin({ direct = false } = {}) {
+      const start = () => {
         hud.hideOverlay();
         phase = 'play';
         T()?.ready();
-      });
+      };
+      if (direct) start();
+      else hud.showIntro(level, start);
     },
 
     // The player clicked a hotspot. Returns true if the click was taken.

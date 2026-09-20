@@ -101,5 +101,11 @@ export function createLookControls(camera, dom, { onStart = () => {}, min = [-45
     apply();
   }
 
-  return { setView, slide };
+  // Move the camera by a vector without turning it (the chase camera uses this).
+  function nudge(v) {
+    camera.position.add(v);
+    apply();
+  }
+
+  return { setView, slide, nudge, isDown: () => pointers.size > 0 };
 }

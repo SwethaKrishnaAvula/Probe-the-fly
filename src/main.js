@@ -10,12 +10,14 @@ import { createStandInHotspot } from './standIn.js';
 import { createRules } from './rules.js';
 import { createHud } from './hud.js';
 import { createMusic } from './music.js';
+import { createHotspotGuide } from './hotspotGuide.js';
 import { createSfx } from './sfx.js';
 import { createLookControls } from './lookControls.js';
 import { createCollisions } from './collisions.js';
 import { createIntro } from './intro.js';
 import { createTelemetry } from './telemetry.js';
 import { layoutId } from './kitchenScenes.js';
+import { createChase } from './chaseCamera.js';
 
 // Left pair (turn_left) and right pair (turn_right), straight from the repo's geometry and handoff files.
 // The right handoff's pulse timing is the filled version from the filling-json branch (main still has nulls).
@@ -113,6 +115,13 @@ function overview() {
 // "Fly view": the fly's eye view. The camera sits at the fly's head and looks the way the fly is facing, low over the
 // counter. The button glides the camera here from wherever it is, every time it is pressed.
 const _fwd = new THREE.Vector3();
+// Recenter: the opening view while the fly is still at its start; once it has flown, the same kind of view centred on it.
+function recenterView() {
+  const p = fly.object.position;
+  if (p.distanceTo(arena.world.start) < 1.5) return overview();
+  const target = new THREE.Vector3(p.x, 0, p.z);
+  return { pos: new THREE.Vector3(target.x, 12.5, target.z - 16), target };
+}
 function eyeView() {
   const p = fly.object.position;
   _fwd.set(0, 0, 1).applyQuaternion(fly.object.quaternion);
@@ -174,7 +183,7 @@ function updateFollow(dt, behaviorRunning) {
 const viewBar = document.createElement('div');
 viewBar.id = 'view-bar';
 [
-  ['Recenter', 'Back to the starting view', () => goToView(overview())],
+  ['Recenter', 'Bring the fly back to the middle of the view', () => goToView(recenterView())],
   ['Fly view', "Look through the fly's eyes", () => goToView(eyeView())],
 ].forEach(([label, title, fn]) => {
   const b = document.createElement('button');
@@ -283,6 +292,17 @@ if (!playIntro) document.getElementById('cinematic').remove();
 
 // The landing path: from beyond the window, through the opening, over the counter, and down onto the table.
 let landing = null;
+
+// Chase camera: while the fly moves, the view moves with it, so the fly is always on screen (chaseCamera.js). It steps
+// aside whenever something else has the camera: the feeding close-up, a button's glide, the fly-in, or the player's hand.
+const chase = createChase({
+  camera: arenaPane.camera,
+  nudge: (v) => arenaControls.nudge(v),
+  getPos: () => fly.object.position,
+  isMoving: () => runner.current != null && runner.current !== 'freeze_stop', // any behavior that carries the fly, or hops it back
+  isPaused: () => follow != null || viewTween != null || landing !== null || !fly.object.visible,
+  isDragging: () => arenaControls.isDown(),
+});
 function landFly() {
   const { entry, window: win, start } = arena.world;
   const path = new THREE.CatmullRomCurve3(
@@ -366,7 +386,7 @@ async function fetchLevels() {
 }
 
 // The world for a level: the kitchen, the fly back at its start, a fresh telemetry log. Nothing here needs the neurons.
-function prepareLevel(index, variant = 0, attempt = 1) {
+function prepareLevel(index, variant = 0, attempt = 1, quick = false) {
   const level = levelsData[index];
   runner.stop();
   fly.resetPose();
@@ -374,7 +394,9 @@ function prepareLevel(index, variant = 0, attempt = 1) {
   fly.object.position.copy(arena.world.start);
   fly.object.rotation.set(0, 0, 0);
   goToView(overview(), true);
-  if (playLanding) fly.object.visible = false; // it arrives through the window
+  chase.reset(); // the fly is back at its start and the view has jumped with it: nothing is owed
+  if (playLanding && !quick) fly.object.visible = false; // it arrives through the window (not on a retry: it is already there)
+  else fly.object.visible = true;
   telemetry?.stop();
   telemetry = createTelemetry({ level, world: arena.world, getPos: () => fly.object.position, layoutId: layoutId(level.id, variant), attempt });
   return level;
@@ -382,17 +404,17 @@ function prepareLevel(index, variant = 0, attempt = 1) {
 
 // Start (or restart) a level: set the world up, let the fly land, then the rules show the level card and play begins.
 let entering = false; // a level is being set up (the fly is landing): ignore a second request
-async function enterLevel(index, { variant = 0, attempt = 1 } = {}) {
+async function enterLevel(index, { variant = 0, attempt = 1, quick = false } = {}) {
   if (entering) return;
   entering = true;
   try {
     collisions.enabled = false;
-    prepareLevel(index, variant, attempt);
+    prepareLevel(index, variant, attempt, quick);
     rules.setLevel(index);
-    if (playLanding) await landFly();
+    if (playLanding && !quick) await landFly();
     collisions.reset();
     collisions.enabled = true;
-    rules.begin();
+    rules.begin({ direct: quick });
   } finally {
     entering = false;
   }
@@ -519,6 +541,9 @@ async function boot() {
     onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
   });
 
+  // On-screen guide: circles every hotspot and names its action (off until the Hotspot guide button is pressed).
+  const guide = createHotspotGuide({ pane: document.getElementById('brain-pane'), camera: brainPane.camera, pairs, isLive: (p) => rules.isLive(p) });
+
   const clock = new THREE.Clock();
   brainPane.renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
@@ -533,6 +558,7 @@ async function boot() {
       if (viewTween.t >= 1) viewTween = null;
     }
     pairs.forEach((p) => p.update(dt * 1000));
+    guide.update();
     const ended = runner.update(dt * 1000);
     if (ended) {
       telemetry?.behaviorEnded();
@@ -546,6 +572,7 @@ async function boot() {
     arena.update(dt * 1000);
     collisions.update();
     updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
+    chase.update(dt);
     updateLanding(dt);
     fly.update(dt);
     brainPane.renderer.render(brainPane.scene, brainPane.camera);
