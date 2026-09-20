@@ -9,6 +9,8 @@ import { createNeuronPair, linkPairs } from './neuronPath.js';
 import { createStandInHotspot } from './standIn.js';
 import { createRules } from './rules.js';
 import { createHud } from './hud.js';
+import { createMusic } from './music.js';
+import { createSfx } from './sfx.js';
 import { createLookControls } from './lookControls.js';
 import { createCollisions } from './collisions.js';
 import { createIntro } from './intro.js';
@@ -259,6 +261,10 @@ fly.object.traverse((o) => {
 arenaPane.scene.add(fly.object);
 const runner = createBehaviorRunner(fly, arena.world);
 const hud = createHud();
+const music = createMusic(); // quiet looping background music, with an on/off button at the top right
+// Movement sounds laid over the music (sfx.js): takeoff.mp3 while the fly is in the air, rest.mp3 for any other activity.
+const sfx = createSfx();
+const IN_THE_AIR = new Set(['walk_forward', 'turn_left', 'turn_right', 'escape_takeoff', 'escape_flight', 'object_track', 'startle']);
 // Solid things stop the fly, the sink soaks it, the counter's edge holds it (collisions.js). It is switched on once the
 // fly has landed, so the fly-in through the window is never counted.
 let telemetry = null; // probe and mistake log for the current level (telemetry.js), created in loadLevel
@@ -532,6 +538,10 @@ async function boot() {
       rules.onBehaviorEnded(ended);
     }
     rules.update(dt * 1000);
+    sfx.update({
+      flying: IN_THE_AIR.has(runner.current) || landing !== null, // a flight, a turn, the escape, tracking, the startle, the fly-in
+      active: pairs.some((p) => p.busy) || (runner.current != null && runner.current !== 'freeze_stop'), // a pulse, or any other behavior
+    });
     arena.update(dt * 1000);
     collisions.update();
     updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
@@ -543,7 +553,7 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, arena, rules, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, music, sfx, arena, rules, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
   // Start of the level: wait for the opening video (level 1), fly the fly in and land it, then show the level card.
   await introDone;
