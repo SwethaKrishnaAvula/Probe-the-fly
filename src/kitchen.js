@@ -77,10 +77,10 @@ const SCENES = {
     items: [
       { type: 'sink', x: -5.4, z: 2.6 },
       { type: 'stove', x: 0.6, z: 5.9, yaw: 0.05 },
-      { type: 'hurdle', x: 6.6, z: 2.4, w: 2.6, yaw: -0.3 },
-      { type: 'fruit', lanes: [{ x: 4.0, z: [-2.8, 7.0] }] },
-      { type: 'bowl', x: -2.6, z: 6.6, decor: true },
-      { type: 'saltbox', x: 3.6, z: 7.0, n: 1, decor: true },
+      { type: 'hurdle', x: 6.6, z: 5.2, w: 2.4, yaw: -0.2 },
+      { type: 'fruit', lanes: [{ x: 4.0, z: [-2.8, 1.5] }] },
+      { type: 'bowl', x: -4.4, z: 6.8, decor: true },
+      { type: 'saltbox', x: 4.6, z: 7.2, n: 1, decor: true },
     ],
   },
   level_3_shadow: {
@@ -93,11 +93,11 @@ const SCENES = {
       // The stove sits in the middle of the counter under the window: its fumes roll from it toward the camera
       // down the hit band, so the fly has to cross the stove's path.
       { type: 'stove', x: 0, z: 5.9, yaw: 0 },
-      { type: 'hurdle', x: -5.6, z: 1.8, w: 2.4, yaw: 0.35 },
-      { type: 'wall', x: -2.4, z: 2.4, along: 'z', n: 3, rows: 2, yaw: 0.1 },
-      { type: 'fruit', lanes: [{ x: 2.6, z: [-2.8, 3.6] }, { x: 6.4, z: [-2.8, 6.6] }] },
-      { type: 'saltbox', x: 5.2, z: 3.6, n: 2, decor: true },
-      { type: 'bowl', x: 8.4, z: 5.4, decor: true },
+      { type: 'hurdle', x: -6.4, z: 3.8, w: 2.2, yaw: 0.2 },
+      { type: 'wall', x: 4.6, z: 4.5, along: 'z', n: 3, rows: 2, yaw: 0.1 },
+      { type: 'fruit', lanes: [{ x: 2.6, z: [-2.8, -0.2] }, { x: 8.0, z: [3.9, 7.6] }] },
+      { type: 'saltbox', x: -5.2, z: 6.9, n: 2, decor: true },
+      { type: 'bowl', x: -3.0, z: 8.2, decor: true },
     ],
   },
   level_4_lesion: {
@@ -112,10 +112,10 @@ const SCENES = {
     sill: { cx: 1.0, flowers: 0.2 },
     items: [
       { type: 'stove', x: 5.2, z: 5.9, yaw: 0.1 },
-      { type: 'wall', x: -5.6, z: 1.6, along: 'z', n: 2, rows: 3, yaw: 0.25 },
-      { type: 'hurdle', x: -7.4, z: 3.6, w: 2.6, yaw: 0.4 },
-      { type: 'fruit', lanes: [{ x: 7.4, z: [-2.8, 3.9] }, { x: -4.4, z: [0.7, 7.0] }] },
-      { type: 'saltbox', x: 7.0, z: 4.6, n: 3 },
+      { type: 'wall', x: -4.6, z: 4.6, along: 'z', n: 2, rows: 3, yaw: 0.25 },
+      { type: 'hurdle', x: -8.6, z: 5.4, w: 2.2, yaw: 0.2 },
+      { type: 'fruit', lanes: [{ x: -6.4, z: [-2.8, 0.6] }, { x: -6.6, z: [4.6, 7.9] }] },
+      { type: 'saltbox', x: 9.4, z: 1.4, n: 2 },
     ],
   },
   level_5_threshold: {
@@ -126,10 +126,10 @@ const SCENES = {
     sill: { cx: 0, flowers: -0.6 },
     items: [
       { type: 'stove', x: 5.6, z: 5.9, yaw: 0.2 },
-      { type: 'saltbox', x: -6.0, z: 4.6, n: 2, offset: 1 },
-      { type: 'wall', x: -2.0, z: 2.8, along: 'x', n: 3, rows: 2, yaw: -0.2 },
+      { type: 'saltbox', x: -8.4, z: 7.0, n: 2, offset: 1 },
+      { type: 'wall', x: -1.4, z: 2.4, along: 'x', n: 3, rows: 2, yaw: -0.2 },
       { type: 'hurdle', x: 2.4, z: 3.0, w: 2.6, yaw: 0.25 },
-      { type: 'fruit', lanes: [{ x: 0.2, z: [-2.8, 7.0] }, { x: 4.6, z: [-2.8, 3.6] }] },
+      { type: 'fruit', lanes: [{ x: 1.8, z: [-2.8, 0.6] }, { x: 10.4, z: [3.8, 7.6] }] },
       { type: 'bowl', x: -2.6, z: 6.4 },
     ],
   },
@@ -442,6 +442,15 @@ export function createKitchen(scene) {
   let sinkHole = null;
   const ROLL_PERIOD_S = 9;
 
+  // Solid things the fly cannot pass through, in world coordinates (see collisions.js). Every piece that stands on the
+  // counter is one, whether or not the level counts it as an obstacle: a decorative stove is still a stove.
+  //   box:    {cx, cz, hx, hz, rot}  half sizes along the piece's own x and z, turned by `rot` (three's rotation.y)
+  //   circle: {cx, cz, r}            or {ref} for a piece that moves (rolling fruit): cx, cz follow ref.position
+  // height: how tall it is; a fly whose belly is above that clears it.
+  const colliders = [];
+  const solidBox = (kind, cx, cz, hx, hz, rot, height) => colliders.push({ kind, type: 'box', cx, cz, hx, hz, rot, height });
+  const solidCircle = (kind, cx, cz, r, height, ref = null) => colliders.push({ kind, type: 'circle', cx, cz, r, height, ref });
+
   const build = {
     stove({ x, z, yaw = 0, decor = false }) {
       const stove = makeStove();
@@ -450,6 +459,7 @@ export function createKitchen(scene) {
       stove.group.rotation.y = -F * yaw;
       levelGroup.add(stove.group);
       levelAnimators.push(stove.update);
+      solidBox('stove', w.x, w.z, STOVE.w / 2 + 0.1, STOVE.d / 2 + 0.1, -F * yaw, STOVE.height);
       if (!decor && !stoveFx) stoveFx = { setFlare: stove.setFlare, x: w.x, z: w.z };
       if (!decor) obstacles.push({ kind: 'stove', x: F * x, z, w: STOVE.w, d: STOVE.d, height: STOVE.height, blocking: true, moving: false });
     },
@@ -470,6 +480,9 @@ export function createKitchen(scene) {
           levelGroup.add(c);
         }
       }
+      const span = (n + (rows > 1 ? 0.5 : 0)) / 2; // the rows are staggered a quarter crate each way
+      const c = toWorld([F * x, 0, z]);
+      solidBox('cheese', c.x, c.z, along === 'x' ? span : 0.5, along === 'z' ? span : 0.5, -yw, rows * rowH);
       obstacles.push({ kind: 'wall', x: F * x, z, w: along === 'x' ? n : 1, d: along === 'z' ? n : 1, height: rows * rowH, moving: false });
     },
 
@@ -479,6 +492,7 @@ export function createKitchen(scene) {
       g.position.set(p.x, 0, p.z);
       g.rotation.y = -F * yaw;
       levelGroup.add(g);
+      solidBox('hurdle', p.x, p.z, w / 2 + 0.4, 0.4, -F * yaw, 0.92);
       obstacles.push({ kind: 'hurdle', x: F * x, z, w: w + 0.7, d: 0.7, height: 0.92, moving: false });
     },
 
@@ -490,6 +504,7 @@ export function createKitchen(scene) {
         fruit.position.copy(toWorld([ob.x, FRUIT_R, ob.z]));
         levelGroup.add(fruit);
         obstacles.push(ob);
+        solidCircle('fruit', fruit.position.x, fruit.position.z, FRUIT_R, FRUIT_R * 2, fruit);
         movers.push({ fruit, ob, phase: i * 2.1 + colorOffset, range: z });
       });
     },
@@ -503,6 +518,7 @@ export function createKitchen(scene) {
         box.position.set(w.x, 0, w.z);
         box.rotation.y = -F * yaw + (i % 2 ? 0.12 : -0.08);
         levelGroup.add(box);
+        solidBox('salt box', w.x, w.z, 0.5, 0.34, box.rotation.y, 1.5);
       }
       if (!decor) obstacles.push({ kind: 'saltbox', x: F * x, z, w: n * 1.05, d: 0.7, height: 1.5, moving: false });
     },
@@ -513,6 +529,7 @@ export function createKitchen(scene) {
       const w = toWorld([F * x, 0, z]);
       bowl.position.set(w.x, 0, w.z);
       levelGroup.add(bowl);
+      solidCircle('bowl', w.x, w.z, 0.95, 0.7);
       if (!decor) obstacles.push({ kind: 'bowl', x: F * x, z, w: 1.9, d: 1.9, height: 0.7, moving: false });
     },
 
@@ -520,6 +537,7 @@ export function createKitchen(scene) {
     sink({ x, z, size = SINK_SIZE }) {
       const c = toWorld([F * x, 0, z]);
       sinkHole = { x0: c.x - size / 2, x1: c.x + size / 2, z0: z - size / 2, z1: z + size / 2 };
+      world.sinkRect = sinkHole;
       const sink = makeSink({ size });
       sink.group.position.set(c.x, 0, c.z);
       levelGroup.add(sink.group);
@@ -583,11 +601,44 @@ export function createKitchen(scene) {
 
 
   // The fly comes in from outside: `entry` is beyond the window, `window` is the opening in the back wall.
+  // A splash where a fly falls into the sink: a ring that spreads and a spray of droplets that rise and fall.
+  const splashFx = new THREE.Group();
+  splashFx.visible = false;
+  scene.add(splashFx);
+  const splashRing = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+  splashFx.add(splashRing);
+  const drops = Array.from({ length: 12 }, (_, i) => {
+    const d = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshBasicMaterial({ color: 0xcfeefc, transparent: true }));
+    d.userData.a = (i / 12) * Math.PI * 2;
+    splashFx.add(d);
+    return d;
+  });
+  let splashT = -1;
+  function updateSplash(dt) {
+    if (splashT < 0) return;
+    splashT += dt;
+    const k = splashT / 1.1;
+    if (k >= 1) {
+      splashT = -1;
+      splashFx.visible = false;
+      return;
+    }
+    splashRing.scale.setScalar(1 + k * 3);
+    splashRing.material.opacity = 0.7 * (1 - k);
+    drops.forEach((d) => {
+      const rad = 0.3 + k * 1.3;
+      d.position.set(Math.cos(d.userData.a) * rad, 0.1 + Math.sin(Math.PI * k) * 1.4, Math.sin(d.userData.a) * rad);
+      d.material.opacity = 1 - k * k;
+    });
+  }
+
   const world = {
     bounds: { minX: -16.2, maxX: 11.2, minZ: BOUNDS_Z[0], maxZ: BOUNDS_Z[1] },
     pie: null,
     target: null,
     obstacles,
+    colliders,
+    sinkRect: null,
     start: toWorld(SCENES.level_1_discovery.start),
     entry: new THREE.Vector3(1.4, 6.6, wallZ + 10),
     window: new THREE.Vector3(0, 5.3, wallZ - 0.3),
@@ -599,7 +650,9 @@ export function createKitchen(scene) {
     obstacles.length = 0;
     movers.length = 0;
     levelAnimators.length = 0;
+    colliders.length = 0;
     sinkHole = null;
+    world.sinkRect = null;
     stoveFx = null;
     sc.items.forEach((item) => build[item.type](item));
   }
@@ -640,9 +693,15 @@ export function createKitchen(scene) {
     sillHolder.clear();
     const cxw = toWorld([F * sc.sill.cx, 0, 0]).x;
     const at = (json) => toWorld([F * json, 0, 0]).x - cxw; // local x on the sill board
-    sill = makeSillFlowers({ w: 6.2, d: 1.7, jarX: at(sc.sill.flowers), jugX: at(sc.sill.flowers + 1.4), plateX: at(sc.sill.flowers + 2.8), potX: at(sc.sill.flowers + 3.4) });
+    sill = makeSillFlowers({ w: 7.4, d: 1.7, jarX: at(sc.sill.flowers), jugX: at(sc.sill.flowers + 1.4), plateX: at(sc.sill.flowers + 2.8), potX: at(sc.sill.flowers + 4.1) });
     sill.group.position.set(cxw, 0, COUNTER.back - 0.95);
     sillHolder.add(sill.group);
+    // the daisy jar and jug, the plate of apples and the basil pot stand on the sill
+    const sz = COUNTER.back - 0.95;
+    solidCircle('vase', cxw + at(sc.sill.flowers), sz, 0.65, 2.6);
+    solidCircle('jug', cxw + at(sc.sill.flowers + 1.4), sz - 0.1, 0.5, 2.6);
+    solidCircle('plate of apples', cxw + at(sc.sill.flowers + 2.8), sz + 0.1, 0.62, 0.6);
+    solidCircle('basil pot', cxw + at(sc.sill.flowers + 4.1), sz, 0.42, 1.1);
   }
 
   return {
@@ -664,6 +723,11 @@ export function createKitchen(scene) {
       if (sc.board) {
         const bp = toWorld([F * sc.board[0], 0, sc.board[2]]);
         boardWrap.position.set(bp.x, 0, bp.z);
+        // the board, the hands and the knife: a box over the board's footprint (the board is mirrored into world x)
+        const th = boardWrap.rotation.y;
+        const lx = -0.7;
+        const lz = -0.3;
+        solidBox('chopping board', bp.x + lx * Math.cos(th) + lz * Math.sin(th), bp.z - lx * Math.sin(th) + lz * Math.cos(th), 3.3, 1.9, th, 1.7);
       }
 
       world.start = toWorld([F * sc.start[0], 0, sc.start[2]]);
@@ -698,8 +762,16 @@ export function createKitchen(scene) {
 
     // Advances every animation: the chopping hand, the boiling pot and its steam, flames, the sink's water,
     // the pie's tea steam, the daisies' sway and the rolling fruit.
+    // A splash at world (x, z), at the sink's water level.
+    splash(x, z) {
+      splashFx.position.set(x, -0.27, z);
+      splashFx.visible = true;
+      splashT = 0;
+    },
+
     update(dtMs) {
       time += dtMs / 1000;
+      updateSplash(dtMs / 1000);
       animators.forEach((fn) => fn(time));
       if (smokePhase !== 'off') layoutSmoke(time);
       levelAnimators.forEach((fn) => fn(time));

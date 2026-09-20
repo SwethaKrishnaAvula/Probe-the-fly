@@ -409,3 +409,29 @@ button.primary {
   padding: 6px 22px;
   touch-action: none;
 }
+
+/* Messages: the fly bumped something, fell in the sink, or reached the edge. */
+#toast {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 8;
+  max-width: 560px;
+  padding: 10px 16px;
+  background: var(--panel-solid);
+  border: 2px solid var(--pink);
+  border-radius: 10px;
+  font-family: var(--read);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

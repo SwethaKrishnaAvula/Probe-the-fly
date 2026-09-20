@@ -109,6 +109,20 @@ export function createHud() {
       );
     },
 
+    // A short message near the bottom of the screen that fades by itself.
+    toast(text, ms = 3200) {
+      let t = document.getElementById('toast');
+      if (!t) {
+        t = el('div');
+        t.id = 'toast';
+        document.getElementById('stage').append(t);
+      }
+      t.textContent = text;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), ms);
+    },
+
     hideOverlay() {
       overlay.classList.add('hidden');
     },

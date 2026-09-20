@@ -18,6 +18,8 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
   body.position.y = BODY_Y;
 
   const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.7 });
+  const dryColor = new THREE.Color(bodyColor);
+  const wetColor = new THREE.Color(0x35465a);
   const darkMat = new THREE.MeshStandardMaterial({ color: 0x2b2118, roughness: 0.8 });
   const wingMat = new THREE.MeshStandardMaterial({
     color: 0xcfe6ff,
@@ -114,6 +116,7 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
     proboscis: 0, // 0..1
     headTilt: 0, // radians
     headDip: 0, // head and proboscis pitched down, radians
+    wet: 0, // soaked, 0..1: darker body, heavier wings
   };
   const resetPose = () => Object.keys(pose).forEach((k) => (pose[k] = 0));
 
@@ -182,6 +185,8 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
       body.position.y = BODY_Y + Math.abs(Math.sin(phase * 2)) * 0.012 * blend + pose.lift;
       body.rotation.x = -pose.pitch;
       body.rotation.z = pose.roll;
+      bodyMat.color.copy(dryColor).lerp(wetColor, pose.wet);
+      wingMat.opacity = 0.55 + 0.3 * pose.wet;
     },
   };
 }
