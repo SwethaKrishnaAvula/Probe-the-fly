@@ -12,20 +12,20 @@
 // and lands. (The behavior id stays walk_forward because levels.json and the notebook use it.)
 export const FLY_DIST = 10.3; // arena units per walk_forward
 export const FLY_MS = 2400;
-const FLY_LIFT = 0.55;
+export const FLY_LIFT = 0.55;
 // The escape: the giant fiber's jump, then a sustained forward flight (escape_takeoff is the jump alone).
 const ESCAPE_MS = 3400;
 const ESCAPE_DIST = 6.0;
 const ESCAPE_LIFT = 1.3;
 // Object tracking: pursue. Swivel toward the target (if the level has one), then fly forward.
-const TRACK_MS = 2000;
-const TRACK_DIST = 3.5;
+export const TRACK_MS = 2000;
+export const TRACK_DIST = 3.5;
 // A turn is an airborne arc: the fly lifts off, beats its wings (the one on the OUTSIDE of the turn harder, so a left
 // turn is driven by the right wing), banks into the turn, flies a short way forward and lands.
 export const TURN_RAD = Math.PI / 2; // per turn click: 90 degrees
 export const TURN_MS = 1300;
 export const TURN_FORWARD = 1.0; // forward travel over the whole turn
-const TURN_LIFT = 0.55; // how high the fly rises during a turn
+export const TURN_LIFT = 0.55; // how high the fly rises during a turn
 const TURN_BANK = 0.4; // radians of roll into the turn
 
 // Time the light pulse takes to travel along the neuron before the fly reacts (visual delay only).

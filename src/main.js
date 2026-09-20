@@ -16,6 +16,7 @@ import { createLookControls } from './lookControls.js';
 import { createCollisions } from './collisions.js';
 import { createIntro } from './intro.js';
 import { createTelemetry } from './telemetry.js';
+import { layoutId } from './kitchenScenes.js';
 
 // Left pair (turn_left) and right pair (turn_right), straight from the repo's geometry and handoff files.
 // The right handoff's pulse timing is the filled version from the filling-json branch (main still has nulls).
@@ -366,28 +367,28 @@ async function fetchLevels() {
 }
 
 // The world for a level: the kitchen, the fly back at its start, a fresh telemetry log. Nothing here needs the neurons.
-function prepareLevel(index) {
+function prepareLevel(index, variant = 0, attempt = 1) {
   const level = levelsData[index];
   runner.stop();
   fly.resetPose();
-  arena.configure(level.arena, level.id);
+  arena.configure(level.arena, level.id, variant); // variant: which arrangement of the kitchen (a retry after a loss rearranges it)
   fly.object.position.copy(arena.world.start);
   fly.object.rotation.set(0, 0, 0);
   goToView(overview(), true);
   if (playLanding) fly.object.visible = false; // it arrives through the window
   telemetry?.stop();
-  telemetry = createTelemetry({ level, world: arena.world, getPos: () => fly.object.position });
+  telemetry = createTelemetry({ level, world: arena.world, getPos: () => fly.object.position, layoutId: layoutId(level.id, variant), attempt });
   return level;
 }
 
 // Start (or restart) a level: set the world up, let the fly land, then the rules show the level card and play begins.
 let entering = false; // a level is being set up (the fly is landing): ignore a second request
-async function enterLevel(index) {
+async function enterLevel(index, { variant = 0, attempt = 1 } = {}) {
   if (entering) return;
   entering = true;
   try {
     collisions.enabled = false;
-    prepareLevel(index);
+    prepareLevel(index, variant, attempt);
     rules.setLevel(index);
     if (playLanding) await landFly();
     collisions.reset();

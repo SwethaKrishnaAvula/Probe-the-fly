@@ -18,11 +18,17 @@ const HOLD = 'freeze_stop'; // a behavior that never ends by itself: it must not
 
 // ctx: { levels, entries, arena, fly, runner, hud, pairs, capture(which, cb), getTelemetry(), beforeMove(),
 //        onProbe(behaviorId), enterLevel(index) }
+import { layoutCount, layoutId as makeLayoutId } from './kitchenScenes.js';
+
 export function createRules(ctx) {
   const { levels, entries, arena, fly, runner, hud, pairs } = ctx;
   const T = () => ctx.getTelemetry?.();
 
   let idx = 0;
+  let variant = 0; // which arrangement of the kitchen this attempt is on (kitchenScenes.js); 0 is the original
+  let attempt = 1; // which try at this level
+  let lastOutcome = null; // 'win' | 'loss' for the attempt that just ended
+  let attemptLogged = false;
   let level = null;
   let phase = 'idle'; // idle | intro | play | startle | ending
   let budget = null;
@@ -59,26 +65,46 @@ export function createRules(ctx) {
     hud.setAction(`Start Task ${idx + 1}`, probed.size >= PROBES_TO_UNLOCK, () => nextLevel());
   }
 
+  // Start level i: a new level begins on its original layout, a retry passes the layout and attempt it wants.
+  function go(i, v = 0, n = 1) {
+    variant = v;
+    attempt = n;
+    ctx.enterLevel(i, { variant: v, attempt: n });
+  }
+
   function nextLevel() {
-    if (idx + 1 < levels.length) ctx.enterLevel(idx + 1);
+    if (idx + 1 < levels.length) go(idx + 1);
     else
       hud.showFinished(score, () => {
         score = 0;
-        ctx.enterLevel(0);
+        go(0);
       });
   }
 
+  // After a loss the kitchen is rearranged: the next layout in the level's set, same hotspots, same way to win it.
+  // After a win, a replay keeps the layout the player just beat.
   function retry() {
     score -= lastGain; // a replayed win must not count twice
-    ctx.enterLevel(idx);
+    const next = lastOutcome === 'loss' ? (variant + 1) % layoutCount(level.id) : variant;
+    go(idx, next, attempt + 1);
+  }
+
+  // Record how this attempt ended (once): to Tiger, with the layout it was played on.
+  function logAttempt(outcome) {
+    lastOutcome = outcome;
+    if (attemptLogged) return;
+    attemptLogged = true;
+    T()?.attemptEnded({ outcome, clicksUsed: level.click_budget != null ? level.click_budget - budget : null });
   }
 
   function showFail() {
+    logAttempt('loss');
     hud.showResult({ won: false, message: 'The clicks ran out before it worked. Try again from memory.', onRetry: retry });
   }
 
   function win() {
     phase = 'ending';
+    logAttempt('win');
     lastGain = WIN_POINTS + (budget ?? 0) * POINTS_PER_CLICK_LEFT;
     score += lastGain;
     hud.setScore(score);
@@ -223,6 +249,8 @@ export function createRules(ctx) {
       clock = null;
       snapshot = null;
       lastGain = 0;
+      lastOutcome = null;
+      attemptLogged = false;
       phase = 'intro';
       pairs.forEach((p) => {
         p.setLive(level.hotspots.includes(p.behaviorId));
@@ -292,7 +320,7 @@ export function createRules(ctx) {
       hud.setScore(0);
       hud.clearNotebook();
       hud.hideOverlay();
-      ctx.enterLevel(0);
+      go(0);
     },
 
     get score() {

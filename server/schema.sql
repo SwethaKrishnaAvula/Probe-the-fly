@@ -12,8 +12,11 @@ CREATE TABLE IF NOT EXISTS probe_events (
   correct          BOOLEAN,                          -- NULL = not scored (discovery level)
   response_ms      INTEGER CHECK (response_ms >= 0), -- click delay after the fly was ready
   notebook_visible BOOLEAN     NOT NULL DEFAULT FALSE,
-  mistake          TEXT                              -- NULL, or bonk:cheese, soaked:sink, wrong_hotspot,
-);                                                   -- dead_hotspot, half_hearted_song, missed_pie, moved_away
+  mistake          TEXT,                             -- NULL, or bonk:cheese, soaked:sink, wrong_hotspot,
+                                                     -- dead_hotspot, half_hearted_song, missed_pie, moved_away
+  layout_id        TEXT,                             -- which kitchen arrangement: level_2_pie:v0 (original), :v1, ...
+  attempt          INTEGER                           -- which try at the level (a retry after a loss rearranges the kitchen)
+);
 
 -- If probe_events already existed with fewer columns (the service was set up earlier), the CREATE above skipped it:
 -- these add whatever is missing and change nothing else.
@@ -21,11 +24,29 @@ ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS session_id  UUID;
 ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS level_id    TEXT;
 ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS behavior_id TEXT;
 ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS mistake     TEXT;
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS layout_id   TEXT;
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS attempt     INTEGER;
 
 SELECT create_hypertable('probe_events', 'time', if_not_exists => TRUE);
 CREATE INDEX IF NOT EXISTS probe_events_player_time ON probe_events (player_id, time DESC);
 
--- 2. Community stats: hourly roll-up per hotspot (scored, non-notebook probes only, the same rule weak_spot.py uses).
+-- 2. One row per attempt at a level: how it ended, and on which kitchen layout. Lets the game see whether a player
+--    does better or worse on a rearranged kitchen, and how many tries a level takes.
+CREATE TABLE IF NOT EXISTS level_attempts (
+  time         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  player_id    UUID        NOT NULL,
+  session_id   UUID,
+  level_id     TEXT        NOT NULL,
+  layout_id    TEXT        NOT NULL,
+  attempt      INTEGER     NOT NULL DEFAULT 1,
+  outcome      TEXT        NOT NULL CHECK (outcome IN ('win', 'loss')),
+  clicks_used  INTEGER,
+  click_budget INTEGER
+);
+SELECT create_hypertable('level_attempts', 'time', if_not_exists => TRUE);
+CREATE INDEX IF NOT EXISTS level_attempts_player_time ON level_attempts (player_id, time DESC);
+
+-- 3. Community stats: hourly roll-up per hotspot (scored, non-notebook probes only, the same rule weak_spot.py uses).
 CREATE MATERIALIZED VIEW IF NOT EXISTS hotspot_stats_hourly
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 hour', time)                       AS bucket,

@@ -17,7 +17,7 @@ from psycopg.rows import dict_row
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=False)
 
 CORE_COLUMNS = ["time", "player_id", "hotspot_id", "correct", "response_ms", "notebook_visible"]
-OPTIONAL_COLUMNS = ["level_id", "behavior_id", "mistake", "session_id"]
+OPTIONAL_COLUMNS = ["level_id", "behavior_id", "mistake", "session_id", "layout_id", "attempt"]
 
 RECALL_QUERY = """
 WITH ranked AS (
@@ -75,6 +75,34 @@ def insert_events(player_id, events):
     with connect() as conn, conn.cursor() as cur:
         cur.executemany(sql, rows)
     return len(rows)
+
+
+ATTEMPT_COLUMNS = ["time", "player_id", "session_id", "level_id", "layout_id", "attempt", "outcome", "clicks_used", "click_budget"]
+
+RECENT_ATTEMPTS_QUERY = """
+SELECT time, level_id, layout_id, attempt, outcome, clicks_used, click_budget
+FROM level_attempts WHERE player_id = %s ORDER BY time DESC LIMIT 30;
+"""
+
+
+def insert_attempts(player_id, rows):
+    sql = f"INSERT INTO level_attempts ({', '.join(ATTEMPT_COLUMNS)}) VALUES ({', '.join(['%s'] * len(ATTEMPT_COLUMNS))})"
+    data = [tuple({"player_id": player_id, **r}.get(c) for c in ATTEMPT_COLUMNS) for r in rows]
+    try:
+        with connect() as conn, conn.cursor() as cur:
+            cur.executemany(sql, data)
+    except psycopg.errors.UndefinedTable:
+        raise RuntimeError("the level_attempts table is missing: run server/schema.sql in Tiger")
+    return len(data)
+
+
+def recent_attempts(player_id):
+    try:
+        with connect() as conn, conn.cursor() as cur:
+            cur.execute(RECENT_ATTEMPTS_QUERY, (player_id,))
+            return cur.fetchall()
+    except psycopg.errors.UndefinedTable:
+        return []  # not set up yet: the rest of the recall still works
 
 
 def recent_probes(player_id):
