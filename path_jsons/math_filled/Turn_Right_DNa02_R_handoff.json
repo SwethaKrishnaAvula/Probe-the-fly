@@ -1,69 +1,69 @@
 {
-  "hotspot_id": "turn_left_DNa02_L",
-  "behavior_id": "turn_left",
+  "hotspot_id": "turn_right_DNa02_R",
+  "behavior_id": "turn_right",
   "dataset": "male-cns:v1.0",
   "hotspot": {
-    "body_id": 523769,
+    "body_id": 10360,
     "type": "DNa02",
-    "instance": "DNa02_L",
-    "side": "L",
+    "instance": "DNa02_R",
+    "side": "R",
     "superclass": "descending_neuron"
   },
   "path": [
     {
-      "body_id": 523769,
+      "body_id": 10360,
       "type": "DNa02",
       "role": "hotspot",
       "incoming_connection_weight": 0
     },
     {
-      "body_id": 801548,
+      "body_id": 801946,
       "type": "Sternal anterior rotator MN",
       "role": "motor_output",
-      "incoming_connection_weight": 106
+      "incoming_connection_weight": 134
     }
   ],
   "route": {
     "strategy": "descending_neuron_direct_motor",
     "hop_count": 1,
     "connection_rois": [
-      "LegNp(T3)(L)",
+      "LegNp(T2)(R)",
       "VNC"
     ]
   },
   "evidence": {
     "behavior_citation": "Berg et al. 2026, Sexual dimorphism in the complete connectome of the Drosophila male central nervous system",
-    "confidence_note": "DNa02 is literature-associated with turning; the displayed path is supported by Male CNS v1.0 connectivity.",
+    "confidence_note": "DNa02 is literature-associated with steering; this direct motor path is supported by Male CNS v1.0 connectivity.",
     "connectivity_source": "Male CNS neuPrint v1.0"
   },
   "math_inputs": {
     "raw_connection_weights": [
-      106
+      134
     ],
-    "path_strength_score": 4.672828834461906
+    "path_strength_score": 4.90527477843843
   },
   "math_outputs": {
     "pulse_timing": [
       {
-        "body_id": 523769,
+        "body_id": 10360,
         "t_start_ms": 0,
         "t_end_ms": 300
       },
       {
-        "body_id": 801548,
+        "body_id": 801946,
         "t_start_ms": 300,
         "t_end_ms": 600
       }
     ],
-    "normalized_strength": 0.9526,
+    "normalized_strength": 0.3957,
     "brightness": [
       {
-        "body_id": 523769,
+        "body_id": 10360,
         "value": 1.0
       },
       {
-        "body_id": 801548,
-        "value": 0.9716
+        "body_id": 801946,
+        "value": 0.9718
       }
     ]
   },
@@ -71,8 +71,8 @@
   "source_files": [
     "data/results/DNa02/neurons.csv",
     "data/results/DNa02/roi_counts.csv",
-    "data/results/DNa02_L_523769_to_T3_rotator/best_path.csv",
-    "data/results/DNa02_L_523769_to_T3_rotator/path_scores.csv",
-    "data/results/DNa02_L_523769_weight40/downstream_all.csv"
+    "data/results/DNa02_R_10360_probe/downstream_all.csv",
+    "data/results/DNa02_R_10360_to_T3_rotator/best_path.csv",
+    "data/results/DNa02_R_10360_to_T3_rotator/path_scores.csv"
   ]
 }

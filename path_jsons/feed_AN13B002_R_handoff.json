@@ -1,0 +1,85 @@
+{
+  "hotspot_id": "feed_AN13B002_R",
+  "behavior_id": "feed",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 21763,
+    "type": "AN13B002",
+    "instance": "AN13B002_R",
+    "side": "R",
+    "superclass": "ascending_neuron"
+  },
+  "path": [
+    {
+      "body_id": 21763,
+      "type": "AN13B002",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 15758,
+      "type": "AN05B099",
+      "role": "intermediate",
+      "incoming_connection_weight": 70
+    },
+    {
+      "body_id": 11063,
+      "type": "DNge032",
+      "role": "intermediate",
+      "incoming_connection_weight": 43
+    },
+    {
+      "body_id": 16827,
+      "type": "MN8",
+      "role": "motor_output",
+      "incoming_connection_weight": 29
+    }
+  ],
+  "route": {
+    "strategy": "representative_feeding_pathway",
+    "hop_count": 3,
+    "connection_rois": [
+      "AVLP(L)",
+      "CentralBrain",
+      "FLA(L)",
+      "GNG",
+      "LegNp(T1)(L)",
+      "LegNp(T2)(L)",
+      "LegNp(T3)(L)",
+      "Ov(L)",
+      "PENP",
+      "SAD",
+      "SAD(-AMMC)",
+      "VLNP(L)",
+      "VNC",
+      "WED(L)"
+    ]
+  },
+  "evidence": {
+    "behavior_citation": "Tastekin et al., The Comprehensive Drosophila Taste-Feeding Connectome, doi:10.1101/2025.08.25.671814",
+    "confidence_note": "Representative feeding pathway from AN13B002_R through DNge032_L to the proboscis motor neuron MN8_L; this is not presented as the complete bilateral feeding circuit.",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [
+      70,
+      43,
+      29
+    ],
+    "path_strength_score": 11.448066892621732
+  },
+  "math_outputs": {
+    "pulse_timing": null,
+    "normalized_strength": null,
+    "brightness": null
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/AN13B002/neurons.csv",
+    "data/results/AN13B002/roi_counts.csv",
+    "data/results/AN13B002_R_21763_probe/downstream_all.csv",
+    "data/results/feed_AN13B002_R_to_MN8_L/best_path.csv",
+    "data/results/feed_AN13B002_R_to_MN8_L/path_scores.csv",
+    "data/results/feed_AN13B002_discovery/downstream_all.csv"
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "hotspot_id": "object_track_LC10a_L",
+  "behavior_id": "object_tracking",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 23989,
+    "type": "LC10a",
+    "instance": "LC10a_L",
+    "side": "L",
+    "superclass": "visual_projection"
+  },
+  "path": [
+    {
+      "body_id": 23989,
+      "type": "LC10a",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 10148,
+      "type": "AOTU041",
+      "role": "intermediate",
+      "incoming_connection_weight": 65
+    },
+    {
+      "body_id": 11445,
+      "type": "AOTU064",
+      "role": "intermediate",
+      "incoming_connection_weight": 46
+    },
+    {
+      "body_id": 10090,
+      "type": "aSP22",
+      "role": "motor_output",
+      "incoming_connection_weight": 77
+    }
+  ],
+  "route": {
+    "strategy": "brain_hotspot_via_descending_neuron",
+    "hop_count": 3,
+    "connection_rois": [
+      "AOTU(L)",
+      "CRE(-ROB)(-RUB)(L)",
+      "CRE(L)",
+      "CentralBrain",
+      "CentralBrain-unspecified",
+      "EPA(L)",
+      "ICL(L)",
+      "INP",
+      "LAL(-GA)(L)",
+      "LAL(L)",
+      "LX(L)",
+      "SIP(L)",
+      "SNP(L)",
+      "VES(L)",
+      "VLNP(L)",
+      "VMNP"
+    ]
+  },
+  "evidence": {
+    "behavior_citation": "2025.10.09.680999v2: LC10a supports courtship tracking; aSP22/DNa12 is associated with pursuit steering.",
+    "confidence_note": "Literature supports the endpoint roles; the exact LC10a-to-aSP22 route is a connectome-derived candidate pathway.",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [
+      65,
+      46,
+      77
+    ],
+    "path_strength_score": 12.396511170426075
+  },
+  "math_outputs": {
+    "pulse_timing": [
+      {
+        "body_id": 23989,
+        "t_start_ms": 0,
+        "t_end_ms": 300
+      },
+      {
+        "body_id": 10148,
+        "t_start_ms": 300,
+        "t_end_ms": 600
+      },
+      {
+        "body_id": 11445,
+        "t_start_ms": 600,
+        "t_end_ms": 900
+      },
+      {
+        "body_id": 10090,
+        "t_start_ms": 900,
+        "t_end_ms": 1200
+      }
+    ],
+    "normalized_strength": 1.0,
+    "brightness": [
+      {
+        "body_id": 23989,
+        "value": 1.0
+      },
+      {
+        "body_id": 10148,
+        "value": 0.8884
+      },
+      {
+        "body_id": 11445,
+        "value": 0.8488
+      },
+      {
+        "body_id": 10090,
+        "value": 0.9078
+      }
+    ]
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/LC10a/neurons.csv",
+    "data/results/LC10a/roi_counts.csv",
+    "data/results/object_track_LC10a_23989_review/downstream_all.csv",
+    "data/results/object_track_LC10a_L_23989_to_aSP22_L/best_path.csv",
+    "data/results/object_track_LC10a_L_23989_to_aSP22_L/path_scores.csv",
+    "data/results/object_track_LC10a_discovery/downstream_all.csv"
+  ]
+}
