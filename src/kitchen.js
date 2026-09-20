@@ -95,9 +95,9 @@ const SCENES = {
       { type: 'stove', x: 0, z: 5.9, yaw: 0 },
       { type: 'hurdle', x: -6.4, z: 3.8, w: 2.2, yaw: 0.2 },
       { type: 'wall', x: 4.6, z: 4.5, along: 'z', n: 3, rows: 2, yaw: 0.1 },
-      { type: 'fruit', lanes: [{ x: 2.6, z: [-2.8, -0.2] }, { x: 8.0, z: [3.9, 7.6] }] },
+      { type: 'fruit', lanes: [{ x: 2.6, z: [-2.8, -0.2] }, { x: 8.0, z: [3.9, 6.8] }] },
       { type: 'saltbox', x: -5.2, z: 6.9, n: 2, decor: true },
-      { type: 'bowl', x: -3.0, z: 8.2, decor: true },
+      { type: 'bowl', x: -5.4, z: 8.5, decor: true },
     ],
   },
   level_4_lesion: {
@@ -113,7 +113,7 @@ const SCENES = {
     items: [
       { type: 'stove', x: 5.2, z: 5.9, yaw: 0.1 },
       { type: 'wall', x: -4.6, z: 4.6, along: 'z', n: 2, rows: 3, yaw: 0.25 },
-      { type: 'hurdle', x: -8.6, z: 5.4, w: 2.2, yaw: 0.2 },
+      { type: 'hurdle', x: -9.2, z: 6.4, w: 2.0, yaw: 0.2 },
       { type: 'fruit', lanes: [{ x: -6.4, z: [-2.8, 0.6] }, { x: -6.6, z: [4.6, 7.9] }] },
       { type: 'saltbox', x: 9.4, z: 1.4, n: 2 },
     ],
