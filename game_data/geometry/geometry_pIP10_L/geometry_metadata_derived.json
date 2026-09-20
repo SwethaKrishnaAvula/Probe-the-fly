@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "derived": true,
+  "derived_note": "Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node in the brain-most tenth of the hotspot neuron. Replace with the real file.",
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "wing_song_pIP10_L.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [
+      52544,
+      36576,
+      63008
+    ],
+    "scale": 0.00020438194898626553,
+    "target_largest_dimension": 20,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "523998",
+      "name": "pIP10",
+      "role": "clickable_hotspot",
+      "glb_object_name": "523998",
+      "swc_file": "523998.swc",
+      "color_rgba": [
+        0.05,
+        0.8,
+        0.2,
+        1
+      ],
+      "hotspot_center_game": [
+        0.639081916285154,
+        -3.229929692609549,
+        -8.00803221059516
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "804090",
+      "name": "TN1a_i",
+      "role": "premotor_relay",
+      "glb_object_name": "804090",
+      "swc_file": "804090.swc",
+      "color_rgba": [
+        0.9,
+        0.05,
+        0.55,
+        1
+      ]
+    },
+    {
+      "body_id": "800241",
+      "name": "hg1 MN",
+      "role": "motor_output",
+      "glb_object_name": "800241",
+      "swc_file": "800241.swc",
+      "color_rgba": [
+        0.1,
+        0.45,
+        0.95,
+        1
+      ]
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "wing_song_pIP10_L",
+    "behavior_id": "wing_song",
+    "pulse_order": [
+      "523998",
+      "804090",
+      "800241"
+    ],
+    "branch_level_pulse_source": "swc"
+  }
+}

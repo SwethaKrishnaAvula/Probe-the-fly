@@ -31,6 +31,13 @@ import swcFeed1Url from '../game_data/geometry/AN13B002-feeding/21763.swc?url';
 import swcFeed2Url from '../game_data/geometry/AN13B002-feeding/15758.swc?url';
 import swcFeed3Url from '../game_data/geometry/AN13B002-feeding/11063.swc?url';
 import swcFeed4Url from '../game_data/geometry/AN13B002-feeding/16827.swc?url';
+// Wing song (pIP10_L -> TN1a_i -> hg1 MN). Metadata derived by scripts/derive_geometry_metadata.mjs (none provided yet).
+import metaWing from '../game_data/geometry/geometry_pIP10_L/geometry_metadata_derived.json';
+import handoffWing from '../path_jsons/math_filled/wing_song_pIP10_L_handoff.json';
+import glbWingUrl from '../game_data/geometry/geometry_pIP10_L/wing_song_pIP10_L.glb?url';
+import swcWing1Url from '../game_data/geometry/geometry_pIP10_L/523998.swc?url';
+import swcWing2Url from '../game_data/geometry/geometry_pIP10_L/804090.swc?url';
+import swcWing3Url from '../game_data/geometry/geometry_pIP10_L/800241.swc?url';
 
 // Branch game_turn_right test screen. Left: the DNa02_L and DNa02_R neurons, each with the motor neuron it
 // drives (anterior on the left). Right: the arena with the fly. Click a hotspot: light travels down its path,
@@ -355,6 +362,12 @@ async function boot() {
       urls: { glb: glbFeedUrl, swc: { 21763: swcFeed1Url, 15758: swcFeed2Url, 11063: swcFeed3Url, 16827: swcFeed4Url } },
       meta: metaFeed,
       handoff: handoffFeed,
+      reference: metaL.normalization,
+    }),
+    await createNeuronPair({
+      urls: { glb: glbWingUrl, swc: { 523998: swcWing1Url, 804090: swcWing2Url, 800241: swcWing3Url } },
+      meta: metaWing,
+      handoff: handoffWing,
       reference: metaL.normalization,
     }),
   ];
