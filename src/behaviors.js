@@ -93,6 +93,7 @@ export function createBehaviorRunner(fly, world) {
       begin: () => fly.setAction('stop'),
       tick: (p) => {
         fly.pose.proboscis = envelope(p, 0.25);
+        fly.pose.headDip = 0.6 * envelope(p, 0.25); // the head drops toward the food as the proboscis reaches out
       },
     },
     wing_song: {

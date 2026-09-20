@@ -46,7 +46,13 @@ arenaPane.renderer.shadowMap.enabled = true;
 // is to the right and dragging left shows what is to the left. Scroll or pinch to move forward and back; right-drag
 // or two fingers to slide. It stays above the counter. (The left screen's neuron still orbits.)
 let viewTween = null;
-const arenaControls = createLookControls(arenaPane.camera, arenaPane.domElement, { onStart: () => (viewTween = null) });
+let follow = null; // set while the camera is zoomed in on the fly during a behavior (see beginFollow)
+const arenaControls = createLookControls(arenaPane.camera, arenaPane.domElement, {
+  onStart: () => {
+    viewTween = null;
+    if (follow) follow.userTook = true; // the player grabbed the camera: stop following and do not snap back
+  },
+});
 
 // The opening view: raised behind the fly's end of the counter, looking along the counter, so the fly, the first
 // obstacles and the window are in frame and the far end (the pie) is out of it.
@@ -83,6 +89,40 @@ function goToView(v, immediate = false) {
   }
   viewTween = { t: 0, fromPos: arenaPane.camera.position.clone(), fromTarget: currentTarget(), v };
 }
+// Behavior camera: while a hotspot's behavior plays, zoom in on the fly (from the front-right and above, so turns and
+// the feeding reach are readable), keep it framed as it moves, then glide back to wherever the camera was.
+// The offset is fixed in the world at the start, so when the fly turns you see it turn instead of the view spinning.
+const FOLLOW_SIDE = 1.6; // scene units to the fly's right
+const FOLLOW_AHEAD = 3.0; // in front of the fly
+const FOLLOW_UP = 1.6;
+const FOLLOW_AIM_DROP = 0.55; // aim below the fly so it sits in the upper part of the pane, clear of the notebook drawer
+const FOLLOW_EASE = 5; // higher = the camera catches up faster
+function beginFollow() {
+  if (follow) return;
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(fly.object.quaternion).setY(0).normalize();
+  const right = fwd.clone().cross(new THREE.Vector3(0, 1, 0)); // the fly's right
+  follow = {
+    saved: { pos: arenaPane.camera.position.clone(), target: currentTarget() },
+    offset: right.multiplyScalar(FOLLOW_SIDE).addScaledVector(fwd, FOLLOW_AHEAD).add(new THREE.Vector3(0, FOLLOW_UP, 0)),
+    userTook: false,
+  };
+  viewTween = null;
+}
+function updateFollow(dt, behaviorRunning) {
+  if (!follow) return;
+  if (follow.userTook) return void (follow = null);
+  if (!behaviorRunning) {
+    goToView(follow.saved);
+    follow = null;
+    return;
+  }
+  const p = fly.object.position;
+  const k = 1 - Math.exp(-dt * FOLLOW_EASE);
+  const pos = arenaPane.camera.position.clone().lerp(p.clone().add(follow.offset), k);
+  const target = currentTarget().lerp(new THREE.Vector3(p.x, p.y + 0.3 - FOLLOW_AIM_DROP, p.z), k);
+  arenaControls.setView(pos, target);
+}
+
 // Two buttons at the top right of the arena: Recenter goes back to the opening view; Fly view is the eye view.
 const viewBar = document.createElement('div');
 viewBar.id = 'view-bar';
@@ -331,6 +371,7 @@ async function boot() {
       const pair = pairById.get(hotspotId);
       if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
       game.onProbe(pair.behaviorId);
+      beginFollow(); // the camera glides in during the pulse and arrives as the behavior starts
       pair.firePulse(() => runner.start(pair.behaviorId));
     },
     onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
@@ -352,6 +393,7 @@ async function boot() {
     pairs.forEach((p) => p.update(dt * 1000));
     runner.update(dt * 1000);
     arena.update(dt * 1000);
+    updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
     updateLanding(dt);
     fly.update(dt);
     brainPane.renderer.render(brainPane.scene, brainPane.camera);

@@ -37,19 +37,27 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
   abdomen.position.set(0, -0.01, -0.5);
   body.add(abdomen);
 
+  // The head and proboscis hang from a pivot at the front of the thorax, so the whole head can dip (pose.headDip).
+  const HEAD_PIVOT_Z = 0.22;
+  const headPivot = new THREE.Group();
+  headPivot.position.set(0, 0, HEAD_PIVOT_Z);
+  body.add(headPivot);
+
   const head = new THREE.Mesh(sphere, darkMat);
   head.scale.set(0.16, 0.15, 0.15);
-  head.position.set(0, 0, 0.36);
-  body.add(head);
+  head.position.set(0, 0, 0.36 - HEAD_PIVOT_Z);
+  headPivot.add(head);
 
-  // Proboscis: a thin tube that grows out of the front of the head (scale.z 0 = retracted).
-  const proboscisGeo = new THREE.CylinderGeometry(0.02, 0.014, 0.3, 8);
+  // Proboscis: a tube that grows out of the front of the head (scale.z 0 = retracted). Long, thick and pale so
+  // the feeding response is readable even when the whole fly is only a few dozen pixels on screen.
+  const proboscisMat = new THREE.MeshStandardMaterial({ color: 0xf0c9a8, roughness: 0.6 });
+  const proboscisGeo = new THREE.CylinderGeometry(0.05, 0.034, 0.8, 8);
   proboscisGeo.rotateX(Math.PI / 2);
-  proboscisGeo.translate(0, 0, 0.15);
-  const proboscis = new THREE.Mesh(proboscisGeo, bodyMat);
-  proboscis.position.set(0, -0.06, 0.46);
+  proboscisGeo.translate(0, 0, 0.4);
+  const proboscis = new THREE.Mesh(proboscisGeo, proboscisMat);
+  proboscis.position.set(0, -0.06, 0.46 - HEAD_PIVOT_Z);
   proboscis.visible = false;
-  body.add(proboscis);
+  headPivot.add(proboscis);
 
   // Legs: 3 per side. Each pivot sits on the thorax so rotating it swings the leg.
   const legGeo = new THREE.CylinderGeometry(0.018, 0.014, 0.42, 6);
@@ -102,6 +110,7 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
     groom: 0, // front legs sweeping over the head, 0..1
     proboscis: 0, // 0..1
     headTilt: 0, // radians
+    headDip: 0, // head and proboscis pitched down, radians
   };
   const resetPose = () => Object.keys(pose).forEach((k) => (pose[k] = 0));
 
@@ -163,6 +172,7 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
       proboscis.visible = pose.proboscis > 0.01;
       proboscis.scale.z = Math.max(0.001, pose.proboscis);
       head.rotation.z = pose.headTilt;
+      headPivot.rotation.x = pose.headDip;
 
       // Tiny body bob while walking.
       body.position.y = BODY_Y + Math.abs(Math.sin(phase * 2)) * 0.012 * blend + pose.lift;
