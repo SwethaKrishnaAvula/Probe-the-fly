@@ -106,6 +106,9 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
     pitch: 0, // nose-up angle
     spread: 0, // both wings swung out, 0..1
     flap: 0, // both wings buzzing, 0..1
+    flapLeft: 0, // the fly's left wing buzzing on its own, 0..1 (a turn beats the outside wing harder)
+    flapRight: 0, // the fly's right wing buzzing on its own, 0..1
+    roll: 0, // banking about the long axis, radians (positive lifts the fly's left side)
     song: 0, // one wing extended and vibrating, 0..1
     groom: 0, // front legs sweeping over the head, 0..1
     proboscis: 0, // 0..1
@@ -162,7 +165,8 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
 
       wings.forEach((w) => {
         const isSongWing = w.side === -1;
-        const buzz = Math.sin(time * 70) * pose.flap;
+        // side 1 is the fly's left wing (+X), side -1 its right; each also buzzes with the shared flap.
+        const buzz = Math.sin(time * 70) * Math.max(pose.flap, w.side === 1 ? pose.flapLeft : pose.flapRight);
         const songBuzz = isSongWing ? Math.sin(time * 55) * pose.song : 0;
         const spread = Math.max(pose.spread, isSongWing ? pose.song : 0);
         w.pivot.rotation.y = -w.side * spread * 1.35;
@@ -177,6 +181,7 @@ export function createFly({ bodyColor = 0x8a6a3c, scale = 1 } = {}) {
       // Tiny body bob while walking.
       body.position.y = BODY_Y + Math.abs(Math.sin(phase * 2)) * 0.012 * blend + pose.lift;
       body.rotation.x = -pose.pitch;
+      body.rotation.z = pose.roll;
     },
   };
 }

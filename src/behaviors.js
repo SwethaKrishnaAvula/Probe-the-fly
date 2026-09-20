@@ -1,13 +1,17 @@
 // Scripted fly behaviors. Every behavior is hand-authored animation (read.md rule 20: the last step
-// from motor output to animation is hand-authored). The step sizes below are tuned so the levels in
-// levels.json are winnable in exactly their click budgets, e.g. level 2 is walk, turn_right, walk, feed
-// and level 4 is walk, turn_right, turn_right, walk, feed.
+// from motor output to animation is hand-authored). The step sizes below were tuned so the levels in
+// levels.json are winnable in exactly their click budgets. Changing the turn (now a 90 degree airborne arc) changes
+// that; see the level check in the commit message before relying on it.
 
 export const WALK_DIST = 4.5; // arena units per walk_forward
 export const WALK_MS = 2000;
-export const TURN_RAD = (120 * Math.PI) / 180; // per turn click
-export const TURN_MS = 800;
-export const TURN_ADVANCE = 0.1; // a turn is nearly in place, with a small forward creep
+// A turn is an airborne arc: the fly lifts off, beats its wings (the one on the OUTSIDE of the turn harder, so a left
+// turn is driven by the right wing), banks into the turn, flies a short way forward and lands.
+export const TURN_RAD = Math.PI / 2; // per turn click: 90 degrees
+export const TURN_MS = 1300;
+export const TURN_FORWARD = 1.0; // forward travel over the whole turn
+const TURN_LIFT = 0.55; // how high the fly rises during a turn
+const TURN_BANK = 0.4; // radians of roll into the turn
 
 // Time the light pulse takes to travel along the neuron before the fly reacts (visual delay only).
 export const PULSE_MS = 450;
@@ -45,12 +49,21 @@ export function createBehaviorRunner(fly, world) {
 
   const headingTo = (target) => Math.atan2(target.x - root.position.x, target.z - root.position.z);
 
+  // dir: 1 = left, -1 = right (the fly's left is +X, and +rotation.y turns left).
   const turn = (dir) => ({
     ms: TURN_MS,
-    begin: () => fly.setAction('gait', 1),
+    begin: () => fly.setAction('stop'), // legs off the ground, not walking
     tick: (p, c) => {
+      const air = envelope(p, 0.25); // 0 on the ground, 1 while airborne
+      fly.pose.lift = TURN_LIFT * air;
+      fly.pose.spread = 0.6 * air;
+      const outside = 1;
+      const inside = 0.35;
+      fly.pose.flapLeft = (dir > 0 ? inside : outside) * air; // left turn: the right wing does the work
+      fly.pose.flapRight = (dir > 0 ? outside : inside) * air;
+      fly.pose.roll = -dir * TURN_BANK * air; // bank into the turn
       root.rotation.y += dir * TURN_RAD * c.dp;
-      return advance(TURN_ADVANCE * c.dp);
+      return advance(TURN_FORWARD * c.dp);
     },
   });
 
