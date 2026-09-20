@@ -152,6 +152,13 @@ export function createHud() {
       c.count.textContent = count > 1 ? `probed ×${count}` : '';
     },
 
+    // Back to an empty notebook (a new run).
+    clearNotebook() {
+      cards.clear();
+      nbBody.replaceChildren(nbEmpty);
+      notebook.classList.remove('open');
+    },
+
     setSnapshot(id, which, dataUrl) {
       const c = cards.get(id);
       if (c && !c[which].src) c[which].src = dataUrl;

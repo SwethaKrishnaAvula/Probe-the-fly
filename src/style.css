@@ -66,16 +66,22 @@ canvas {
 #brand {
   position: absolute;
   top: 12px;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
   text-align: center;
   font-size: 12px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--pink);
   text-shadow: 2px 2px 0 #2b1030;
-  pointer-events: none;
+  cursor: pointer; /* clicking it restarts the run at the Discovery Lab */
   z-index: 6;
+}
+#brand:hover,
+#brand:focus-visible {
+  color: #fff;
+  outline: none;
 }
 
 #hud {
