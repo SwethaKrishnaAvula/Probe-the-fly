@@ -1,0 +1,73 @@
+{
+  "hotspot_id": "wing_song_pIP10_R",
+  "behavior_id": "wing_song",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 11116,
+    "type": "pIP10",
+    "instance": "pIP10_R",
+    "side": "R",
+    "superclass": "descending_neuron"
+  },
+  "path": [
+    {
+      "body_id": 11116,
+      "type": "pIP10",
+      "instance": "pIP10_R",
+      "superclass": "descending_neuron",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 804090,
+      "type": "TN1a_i",
+      "instance": "TN1a_i_L",
+      "superclass": "vnc_intrinsic",
+      "role": "premotor_relay",
+      "incoming_connection_weight": 102
+    },
+    {
+      "body_id": 800917,
+      "type": "hg1 MN",
+      "instance": "hg1 MN_R",
+      "superclass": "vnc_motor",
+      "role": "motor_output",
+      "incoming_connection_weight": 36
+    }
+  ],
+  "route": {
+    "strategy": "descending_neuron_via_vnc_premotor_relay",
+    "hop_count": 2,
+    "connection_rois": ["VNC", "LTct", "IntTct", "LegNp(T1)(R)", "WTct(UTct-T2)(R)"]
+  },
+  "evidence": {
+    "behavior_citation": "von Philipsborn et al. 2011, Neuronal Control of Drosophila Courtship Song, Neuron 69(3):509-522 (pIP10 command neuron); Shirangi, Wong, Truman & Stern 2016, Doublesex Regulates the Connectivity of a Neural Circuit Controlling Drosophila Male Courtship Song, Developmental Cell 37(6):533-544 (TN1A activates hg1 motoneuron, causal statement); Shirangi, Stern & Truman 2013, Motor control of Drosophila courtship song, Cell Reports 5:678-686 (hg1 motoneuron silencing eliminates sine song specifically)",
+    "confidence_note": "Every node AND every functional link in this chain is independently confirmed in prior literature, matching the L-side hotspot's evidentiary standard. Relay selected by explicitly filtering all 22 TN1a subtypes (both L- and R-labeled instances) for connections that terminate at hg1 MN_R specifically, then ranking by summed log1p weight -- not by naming symmetry with the L-side hotspot and not by raw connection strength from pIP10_R alone (both of those simpler approaches were tried first and rejected as methodologically unsound; see notes). TN1a_i_L scored highest (8.246) among all real candidates checked. Neuroglancer-confirmed superclasses match expected roles exactly (descending_neuron / vnc_intrinsic / vnc_motor).",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [102, 36],
+    "path_strength_score": 8.245647
+  },
+  "math_outputs": {
+    "pulse_timing": [
+      { "body_id": 11116, "t_start_ms": 0, "t_end_ms": 300 },
+      { "body_id": 804090, "t_start_ms": 300, "t_end_ms": 600 },
+      { "body_id": 800917, "t_start_ms": 600, "t_end_ms": 900 }
+    ],
+    "normalized_strength": "PENDING -- requires Shreya's full-batch script rerun across all hotspots, not calculable from this file alone",
+    "brightness": [
+      { "body_id": 11116, "value": 1.0 },
+      { "body_id": 804090, "value": 0.845, "note": "PROVISIONAL -- computed against 513 (strongest edge weight observed anywhere in this project so far, the dPR1-dPR1 reciprocal connection), not yet the true global max from a full rerun" },
+      { "body_id": 800917, "value": 0.747, "note": "PROVISIONAL -- same caveat as above" }
+    ]
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/pIP10/neurons.csv",
+    "data/results/wing_song_pIP10_review/downstream_comparison.csv",
+    "data/results/TN1a__/neurons.csv",
+    "data/results/wing_song_TN1a___review/downstream_comparison.csv"
+  ],
+  "notes": "Double-crossing pattern confirmed: TN1a_i_L (an L-labeled relay) is the strongest verified route from pIP10_R to hg1 MN_R, confirmed via ROI-level synapse location (WTct(UTct-T2)(R) for the second hop), not just instance naming. Combined with the L-side hotspot's own single crossing (TN1a_i_L -> hg1 MN_R there too, interestingly the same relay neuron feeds both sides' strongest paths), this suggests the wing-song circuit's L/R wiring is more interleaved than simple mirror symmetry -- stated as an open architectural observation, not resolved. Two earlier candidate paths were considered and rejected during verification: (1) TN1a_i_R, chosen initially by naming symmetry with the L-side hotspot alone, never checked against real data; (2) TN1a_g_R, chosen by strongest raw connection from pIP10_R without checking which hg1 target it reached -- this path actually crosses to hg1 MN_L, which would not visibly drive the right wing and was rejected for that reason despite being anatomically real. TN1a_h_R (803438, weights 105/32) remains a very close alternative (8.160 vs. 8.246) with a simpler non-crossing story and could be substituted if a cleaner narrative is preferred over the marginally higher score."
+}
