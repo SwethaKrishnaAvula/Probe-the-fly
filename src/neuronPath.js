@@ -7,9 +7,9 @@ import { parseSwc, toGlbFrame, buildGrid, nearest, geodesicFrom, vertexProgress,
 // Neurons stay dim; a click sends a bright band of light along the path: down DNa02_L, then into the
 // motor neuron, using the handoff's math_outputs.pulse_timing.
 
-const BASE_DIM = 0.4; // resting brightness of a neuron (0..1)
-const BASE_HOVER = 0.7; // hotspot neuron brightness while hovered
-const TAIL = 0.18; // length of the glowing trail behind the head, as a fraction of the neuron
+export const BASE_DIM = 0.4; // resting brightness of a neuron (0..1)
+export const BASE_HOVER = 0.7; // hotspot neuron brightness while hovered
+export const TAIL = 0.18; // length of the glowing trail behind the head, as a fraction of the neuron
 const PULSE_TIME_SCALE = 1; // 1 = exactly the milliseconds in the handoff json
 
 const vertexShader = /* glsl */ `
@@ -42,7 +42,7 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-function makeMaterial(rgba) {
+export function makeMaterial(rgba) {
   return new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,

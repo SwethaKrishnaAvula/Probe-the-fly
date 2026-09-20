@@ -1,9 +1,11 @@
 // Scripted fly behaviors. Every behavior is hand-authored animation (read.md rule 20: the last step
 // from motor output to animation is hand-authored). The step sizes below were tuned so the levels in
-// levels.json are winnable in exactly their click budgets, with the kitchen's real layout (kitchen.js SCENES):
-//   level 2: turn_right, walk_forward, walk_forward, feed        (4 clicks)
-//   level 3: the same, plus a spare click for the shadow's freeze_stop
-//   level 4: turn_right x3 (turn_left is dead), walk_forward, feed  (5 clicks)
+// levels.json are winnable in their shortest solutions below, with the kitchen's real layout (kitchen.js SCENES).
+// Each level's click_budget in levels.json is double its shortest solution, so a player has room to explore and err:
+//   level 2: turn_right, walk_forward, walk_forward, feed        (4 clicks, budget 8)
+//   level 3: the same, plus a freeze_stop for the smoke          (5 clicks, budget 10)
+//   level 4: turn_right x3 (turn_left is dead), walk_forward, feed  (5 clicks, budget 10)
+//   level 5: object_track, approach_odor, wing_song              (3 clicks, budget 6)
 // Changing FLY_DIST, TURN_RAD or TURN_FORWARD, or a start or pie in kitchen.js, changes that: re-check the levels.
 
 // walk_forward is a short straight flight: the fly lifts off, beats both wings equally, flies a fixed distance

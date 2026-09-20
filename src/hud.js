@@ -102,7 +102,7 @@ export function createHud() {
         [
           { text: `Final score: ${score}.` },
           {
-            text: 'Weak-spot mode is built at runtime from task_templates.json, which has not been provided yet.',
+            text: 'Weak spot mode is built at runtime from task_templates.json, which has not been provided yet.',
           },
         ],
         [{ label: 'Play again', primary: true, onClick: onRestart }],

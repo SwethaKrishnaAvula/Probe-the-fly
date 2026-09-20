@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
+    "api": "python3 -m uvicorn server.app:app --port 8000",
     "build": "vite build",
     "preview": "vite preview"
   },

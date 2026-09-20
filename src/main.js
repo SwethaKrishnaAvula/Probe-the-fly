@@ -6,20 +6,23 @@ import { createPicker } from './picking.js';
 import { createKitchen as createArena } from './kitchen.js';
 import { createBehaviorRunner } from './behaviors.js';
 import { createNeuronPair, linkPairs } from './neuronPath.js';
+import { createStandInHotspot } from './standIn.js';
 import { createHud } from './hud.js';
 import { createLookControls } from './lookControls.js';
 import { createCollisions } from './collisions.js';
+import { createBrainShell } from './brainShell.js';
 import { createIntro } from './intro.js';
+import { createTelemetry } from './telemetry.js';
 
 // Left pair (turn_left) and right pair (turn_right), straight from the repo's geometry and handoff files.
 // The right handoff's pulse timing is the filled version from the filling-json branch (main still has nulls).
 import metaL from '../game_data/geometry/DNa02_L_projection/geometry_metadata.json';
-import handoffL from '../path_jsons/DNa02_L_handoff.json';
+import handoffL from '../path_jsons/math_filled/Turn_Left_DNa02_L_handoff.json';
 import glbLUrl from '../game_data/geometry/DNa02_L_projection/DNa02_L_523769_to_801548.glb?url';
 import swcL1Url from '../game_data/geometry/DNa02_L_projection/523769.swc?url';
 import swcL2Url from '../game_data/geometry/DNa02_L_projection/801548.swc?url';
 import metaR from '../game_data/geometry/DNa02_R_projection/geometry_metadata_right.json';
-import handoffR from '../path_jsons/math_filled/DNa02_R_handoff.json';
+import handoffR from '../path_jsons/math_filled/Turn_Right_DNa02_R_handoff.json';
 import glbRUrl from '../game_data/geometry/DNa02_R_projection/DNa02_R_10360_801946.glb?url';
 import swcR1Url from '../game_data/geometry/DNa02_R_projection/10360.swc?url';
 import swcR2Url from '../game_data/geometry/DNa02_R_projection/801946.swc?url';
@@ -258,7 +261,8 @@ const runner = createBehaviorRunner(fly, arena.world);
 const hud = createHud();
 // Solid things stop the fly, the sink soaks it, the counter's edge holds it (collisions.js). It is switched on once the
 // fly has landed, so the fly-in through the window is never counted.
-const collisions = createCollisions({ fly, runner, world: arena.world, arena, say: (t) => hud.toast(t) });
+let telemetry = null; // probe and mistake log for the current level (telemetry.js), created in loadLevel
+const collisions = createCollisions({ fly, runner, world: arena.world, arena, say: (t) => hud.toast(t), onMishap: (m) => telemetry?.mishap(m) });
 collisions.enabled = false;
 
 // Start of every level: the fly flies in from outside the window, through it, and lands on the landing table at
@@ -357,11 +361,16 @@ async function loadLevel() {
   hud.setLevel({ index, total: levels.length, level });
   hud.setNotebookVisible(level.notebook_visible);
   hud.setScore(0);
+  telemetry = createTelemetry({ level, world: arena.world, getPos: () => fly.object.position });
   let budget = level.click_budget;
   hud.setClicks(budget, '0/' + level.hotspots.length);
   // Level 1 unlocks "Start Task 1" after 5 probes; this screen has one hotspot, so it stays locked.
   if (level.type === 'discovery') hud.setAction('Start Task 1', false, () => {});
-  const begin = () => hud.showIntro(level, () => hud.hideOverlay());
+  const begin = () =>
+    hud.showIntro(level, () => {
+      hud.hideOverlay();
+      telemetry.ready();
+    });
 
   let probes = 0;
   return {
@@ -447,8 +456,19 @@ async function boot() {
     ),
   ];
   pairs.forEach((p) => (p.behaviorId = BEHAVIOR_ALIASES[p.behaviorId] ?? p.behaviorId));
+  // STAND-INS (lavender, not real neurons): behaviors the levels need but that have no circuit data yet. Each is to be
+  // replaced by a real createNeuronPair() when Shreya's geometry and handoff for it arrive. Positions are in the brain
+  // view's world coordinates, clear of the real hotspots (which sit at x -9.8..-7.4).
+  pairs.push(
+    createStandInHotspot({ hotspotId: 'standin_walk_forward', behaviorId: 'walk_forward', position: [-6.5, 3.2, 1.5], seed: 11 }),
+    createStandInHotspot({ hotspotId: 'standin_freeze_stop', behaviorId: 'freeze_stop', position: [-6.0, -1.0, 1.0], seed: 23 }),
+    createStandInHotspot({ hotspotId: 'standin_groom_head', behaviorId: 'groom_head', position: [-5.5, 1.4, 2.0], seed: 37 }),
+    createStandInHotspot({ hotspotId: 'standin_approach_odor', behaviorId: 'approach_odor', position: [-9.6, 2.0, 1.5], seed: 53 }),
+  );
   pairs.forEach((p) => brainPane.scene.add(p.group));
-  frameBrain(pairs.map((p) => p.group));
+  const shell = createBrainShell(); // the glassy wire outline round the neurons (decoration only)
+  brainPane.scene.add(shell.group);
+  frameBrain([...pairs.map((p) => p.group), shell.group]); // the shell is part of what has to fit in view
   const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));
 
   createPicker({
@@ -460,6 +480,7 @@ async function boot() {
       const pair = pairById.get(hotspotId);
       if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
       game.onProbe(pair.behaviorId);
+      telemetry?.probe(pair.behaviorId);
       if (pair.behaviorId === 'feed') beginFollow(); // feeding only: the camera glides in during the pulse and arrives as the behavior starts
       pair.firePulse(() => {
         collisions.begin();
@@ -483,7 +504,7 @@ async function boot() {
       if (viewTween.t >= 1) viewTween = null;
     }
     pairs.forEach((p) => p.update(dt * 1000));
-    runner.update(dt * 1000);
+    if (runner.update(dt * 1000)) telemetry?.behaviorEnded();
     arena.update(dt * 1000);
     collisions.update();
     updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
@@ -495,7 +516,7 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, arena, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, arena, pairs, shell, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
   // Start of the level: wait for the opening video (level 1), fly the fly in and land it, then show the level card.
   await introDone;
