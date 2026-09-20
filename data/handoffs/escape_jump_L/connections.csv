@@ -1,0 +1,2 @@
+bodyId_pre,bodyId_post,weight,type_pre,type_post,instance_pre,instance_post,status_pre,status_post,cropped_pre,cropped_post,conn_roiInfo,roi_names
+10010,804642,20,DNp01,TTMn,DNp01(GF)_L,TTMn_L,Traced,Traced,,,"{'LTct': {'post': 20}, 'VNC': {'post': 20}}","['LTct', 'VNC']"

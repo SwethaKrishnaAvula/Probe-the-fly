@@ -1,0 +1,58 @@
+{
+  "hotspot_id": "escape_jump_L",
+  "behavior_id": "escape_takeoff",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 10010,
+    "type": "DNp01",
+    "instance": "DNp01(GF)_L",
+    "side": "L",
+    "superclass": "descending_neuron"
+  },
+  "path": [
+    {
+      "body_id": 10010,
+      "type": "DNp01",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 804642,
+      "type": "TTMn",
+      "role": "motor_output",
+      "incoming_connection_weight": 20
+    }
+  ],
+  "route": {
+    "strategy": "Reviewed direct MaleCNS DNp01_L to TTMn_L connection",
+    "hop_count": 1,
+    "connection_rois": [
+      "LTct",
+      "VNC"
+    ]
+  },
+  "evidence": {
+    "behavior_citation": "Classic Giant Fiber literature; exact citation pending biology review",
+    "confidence_note": "Direct DNp01_L to TTMn_L connection verified in male-cns:v1.0 and visually reviewed in Neuroglancer.",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [
+      20
+    ],
+    "path_strength_score": 3.044522437723423
+  },
+  "math_outputs": {
+    "pulse_timing": null,
+    "normalized_strength": null,
+    "brightness": null
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/DNp01/neurons.csv",
+    "data/results/DNp01/roi_counts.csv",
+    "data/results/DNp01_GF__L_10010_probe/downstream_all.csv",
+    "data/results/escape_jump_L_final/best_path.csv",
+    "data/results/escape_jump_L_final/path_scores.csv"
+  ]
+}
