@@ -89,7 +89,7 @@ function goToView(v, immediate = false) {
   }
   viewTween = { t: 0, fromPos: arenaPane.camera.position.clone(), fromTarget: currentTarget(), v };
 }
-// Behavior camera: while a hotspot's behavior plays, zoom in on the fly (from the front-right and above, so turns and
+// Feeding camera (feeding only; other behaviors keep the fixed view): while the behavior plays, zoom in on the fly (from the front-right and above, so turns and
 // the feeding reach are readable), keep it framed as it moves, then glide back to wherever the camera was.
 // The offset is fixed in the world at the start, so when the fly turns you see it turn instead of the view spinning.
 const FOLLOW_SIDE = 1.6; // scene units to the fly's right
@@ -371,7 +371,7 @@ async function boot() {
       const pair = pairById.get(hotspotId);
       if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
       game.onProbe(pair.behaviorId);
-      beginFollow(); // the camera glides in during the pulse and arrives as the behavior starts
+      if (pair.behaviorId === 'feed') beginFollow(); // feeding only: the camera glides in during the pulse and arrives as the behavior starts
       pair.firePulse(() => runner.start(pair.behaviorId));
     },
     onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
