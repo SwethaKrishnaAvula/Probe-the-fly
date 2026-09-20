@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "derived": true,
+  "derived_note": "Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node in the brain-most tenth of the hotspot neuron. Replace with the real file.",
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "escape_flight_R.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [
+      47392,
+      40384,
+      55168
+    ],
+    "scale": 0.0002536525974025974,
+    "target_largest_dimension": 20,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "10001",
+      "name": "DNp01",
+      "role": "clickable_hotspot",
+      "glb_object_name": "10001",
+      "swc_file": "10001.swc",
+      "color_rgba": [
+        0.05,
+        0.8,
+        0.2,
+        1
+      ],
+      "hotspot_center_game": [
+        -2.9788961038961035,
+        -1.7826958198051943,
+        -8.115107548701298
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "802401",
+      "name": "PSI",
+      "role": "intermediate",
+      "glb_object_name": "802401",
+      "swc_file": "802401.swc",
+      "color_rgba": [
+        0.9,
+        0.05,
+        0.55,
+        1
+      ]
+    },
+    {
+      "body_id": "802544",
+      "name": "DLMn c-f",
+      "role": "motor_output",
+      "glb_object_name": "802544",
+      "swc_file": "802544.swc",
+      "color_rgba": [
+        0.1,
+        0.45,
+        0.95,
+        1
+      ]
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "escape_flight_R",
+    "behavior_id": "flight",
+    "pulse_order": [
+      "10001",
+      "802401",
+      "802544"
+    ],
+    "branch_level_pulse_source": "swc"
+  }
+}

@@ -1,0 +1,437 @@
+:root {
+  --sky: #161b2e;
+  --panel: rgba(22, 27, 46, 0.88);
+  --panel-solid: #1c2340;
+  --line: #3a4468;
+  --text: #dfe6ff;
+  --dim: #8792b8;
+  --pink: #ff7ab8;
+  --teal: #5ee6d0;
+  --gold: #ffd35e;
+  --pixel: 'Press Start 2P', 'Courier New', ui-monospace, monospace;
+  --read: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0e1a;
+  color: var(--text);
+  font-family: var(--pixel);
+}
+
+/* The whole game sits in one rounded, framed screen. */
+#stage {
+  position: fixed;
+  inset: 10px;
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--sky);
+}
+
+#app {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.pane {
+  flex: 1 1 50%;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+}
+
+.pane + .pane {
+  border-left: 2px solid var(--line);
+}
+
+/* Absolute so the canvas never props the pane open when the window shrinks. */
+canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- Title and top bar ---- */
+#brand {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--pink);
+  text-shadow: 2px 2px 0 #2b1030;
+  pointer-events: none;
+  z-index: 6;
+}
+
+#hud {
+  position: absolute;
+  top: 38px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 5;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.hud-title {
+  color: var(--teal);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.hud-goal {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-family: var(--read);
+  font-size: 13px;
+}
+
+.hud-stat {
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.hud-label {
+  color: var(--dim);
+  margin-right: 8px;
+}
+
+.hud-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+button {
+  font: inherit;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--panel-solid);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #0c1020;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--teal);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0c1020;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--pink);
+  border-color: #ffb3d6;
+  color: #2b1030;
+}
+
+.hud-action {
+  pointer-events: auto;
+}
+
+/* ---- Bottom: notebook drawer above a small hint strip ---- */
+#hint {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 7px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dim);
+  pointer-events: none;
+  z-index: 4;
+}
+
+#notebook {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 44px;
+  z-index: 5;
+  background: rgba(22, 27, 46, 0.97);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+}
+
+.nb-tab {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  transform: translateY(-100%);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: none;
+  background: var(--panel);
+}
+
+.nb-body {
+  display: none;
+  gap: 10px;
+  padding: 12px;
+  overflow-x: auto;
+  height: 230px;
+  box-sizing: border-box;
+}
+
+#notebook.open .nb-body {
+  display: flex;
+}
+
+.nb-empty {
+  color: var(--dim);
+  align-self: center;
+  font-family: var(--read);
+  font-size: 12px;
+}
+
+.nb-card {
+  flex: 0 0 210px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: rgba(32, 40, 70, 0.9);
+  font-family: var(--read);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.nb-imgs {
+  display: flex;
+  gap: 4px;
+}
+
+.nb-imgs img {
+  width: 50%;
+  min-height: 40px;
+  background: #0b0e1a;
+  border-radius: 4px;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.nb-imgs img:not([src]) {
+  visibility: hidden;
+}
+
+.nb-card p {
+  margin: 6px 0 2px;
+}
+
+.nb-count {
+  color: var(--dim);
+  font-size: 10px;
+}
+
+/* ---- Intro and result cards ---- */
+#overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 22, 0.66);
+}
+
+.card {
+  max-width: 460px;
+  padding: 26px 30px;
+  background: var(--panel-solid);
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 0 #0c1020;
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--pink);
+  text-shadow: 2px 2px 0 #2b1030;
+}
+
+.card p {
+  margin: 10px 0;
+  font-family: var(--read);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.card .goal {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ---- Right screen: grab cursor ---- */
+#arena-pane canvas {
+  cursor: grab;
+}
+
+#arena-pane canvas:active {
+  cursor: grabbing;
+}
+
+/* ---- Opening video over the whole screen ---- */
+#cinematic {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #a9d8f0;
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+
+#cinematic.fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cin-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(30, 40, 70, 0.7);
+  z-index: 3;
+  padding: 0 24px;
+}
+
+.cin-skip {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  font-size: 8px;
+  background: rgba(22, 27, 46, 0.7);
+}
+
+.cin-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff1d6;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* View buttons at the top right of the arena. */
+#view-bar {
+  position: absolute;
+  top: 100px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+#view-bar button {
+  font-size: 8px;
+  padding: 8px 11px;
+  background: var(--panel);
+}
+
+#arena-pane canvas {
+  touch-action: none;
+}
+
+/* Nav bar along the bottom of the arena. */
+#nav-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-size: 8px;
+  color: var(--dim);
+  text-transform: uppercase;
+  touch-action: none;
+  user-select: none;
+}
+
+#nav-bar button {
+  font-size: 14px;
+  padding: 6px 22px;
+  touch-action: none;
+}
+
+/* Messages: the fly bumped something, fell in the sink, or reached the edge. */
+#toast {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 8;
+  max-width: 560px;
+  padding: 10px 16px;
+  background: var(--panel-solid);
+  border: 2px solid var(--pink);
+  border-radius: 10px;
+  font-family: var(--read);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
