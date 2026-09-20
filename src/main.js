@@ -5,9 +5,10 @@ import { createFly } from './fly.js';
 import { createPicker } from './picking.js';
 import { createKitchen as createArena } from './kitchen.js';
 import { createBehaviorRunner } from './behaviors.js';
-import { createNeuronPair } from './neuronPath.js';
+import { createNeuronPair, linkPairs } from './neuronPath.js';
 import { createHud } from './hud.js';
 import { createLookControls } from './lookControls.js';
+import { createCollisions } from './collisions.js';
 import { createIntro } from './intro.js';
 
 // Left pair (turn_left) and right pair (turn_right), straight from the repo's geometry and handoff files.
@@ -46,6 +47,28 @@ import swcTrack1Url from '../game_data/geometry/object_track_LC10a_L/23989.swc?u
 import swcTrack2Url from '../game_data/geometry/object_track_LC10a_L/10148.swc?url';
 import swcTrack3Url from '../game_data/geometry/object_track_LC10a_L/11445.swc?url';
 import swcTrack4Url from '../game_data/geometry/object_track_LC10a_L/10090.swc?url';
+
+// Escape (giant fiber DNp01, left and right). Each GF neuron drives a jump path and a flight path; the four circuits
+// are linked into two hotspots (GF_L, GF_R) that fire both paths at once. The geometry metadata for these has no
+// click point, so scripts/derive_geometry_metadata.mjs derived it (its normalization matches the real files exactly).
+import metaJumpL from '../game_data/geometry/DNp01_GF_escape_circuit/geometry_metadata_derived_escape_jump_L.json';
+import metaJumpR from '../game_data/geometry/DNp01_GF_escape_circuit/geometry_metadata_derived_escape_jump_R.json';
+import metaFlightL from '../game_data/geometry/DNp01_GF_escape_circuit/geometry_metadata_derived_escape_flight_L.json';
+import metaFlightR from '../game_data/geometry/DNp01_GF_escape_circuit/geometry_metadata_derived_escape_flight_R.json';
+import handoffJumpL from '../path_jsons/math_filled/escape_jump_DNp01_GF_L_handoff.json';
+import handoffJumpR from '../path_jsons/math_filled/escape_jump_DNp01_GF_R_handoff.json';
+import handoffFlightL from '../path_jsons/math_filled/escape_flight_DNp01_GF_L_handoff.json';
+import handoffFlightR from '../path_jsons/math_filled/escape_flight_DNp01_GF_R_handoff.json';
+import glbJumpLUrl from '../game_data/geometry/DNp01_GF_escape_circuit/escape_jump_L.glb?url';
+import glbJumpRUrl from '../game_data/geometry/DNp01_GF_escape_circuit/escape_jump_R.glb?url';
+import glbFlightLUrl from '../game_data/geometry/DNp01_GF_escape_circuit/escape_flight_L.glb?url';
+import glbFlightRUrl from '../game_data/geometry/DNp01_GF_escape_circuit/escape_flight_R.glb?url';
+import swcGfLUrl from '../game_data/geometry/DNp01_GF_escape_circuit/10010.swc?url';
+import swcGfRUrl from '../game_data/geometry/DNp01_GF_escape_circuit/10001.swc?url';
+import swcTtmLUrl from '../game_data/geometry/DNp01_GF_escape_circuit/804642.swc?url';
+import swcTtmRUrl from '../game_data/geometry/DNp01_GF_escape_circuit/800146.swc?url';
+import swcPsiUrl from '../game_data/geometry/DNp01_GF_escape_circuit/802401.swc?url';
+import swcDlmUrl from '../game_data/geometry/DNp01_GF_escape_circuit/802544.swc?url';
 
 // The handoffs name some behaviors differently from the game's behavior runner and levels.json.
 const BEHAVIOR_ALIASES = { object_tracking: 'object_track' };
@@ -233,6 +256,10 @@ fly.object.traverse((o) => {
 arenaPane.scene.add(fly.object);
 const runner = createBehaviorRunner(fly, arena.world);
 const hud = createHud();
+// Solid things stop the fly, the sink soaks it, the counter's edge holds it (collisions.js). It is switched on once the
+// fly has landed, so the fly-in through the window is never counted.
+const collisions = createCollisions({ fly, runner, world: arena.world, arena, say: (t) => hud.toast(t) });
+collisions.enabled = false;
 
 // Start of every level: the fly flies in from outside the window, through it, and lands on the landing table at
 // its end of the counter. On level 1 a short video of the cottage plays first. Skip both with ?intro=0.
@@ -387,6 +414,37 @@ async function boot() {
       handoff: handoffTrack,
       reference: metaL.normalization,
     }),
+    // Escape: the jump path is the primary (it owns the click sphere), the flight path shares its cell body.
+    linkPairs(
+      await createNeuronPair({
+        urls: { glb: glbJumpLUrl, swc: { 10010: swcGfLUrl, 804642: swcTtmLUrl } },
+        meta: metaJumpL,
+        handoff: handoffJumpL,
+        reference: metaL.normalization,
+      }),
+      await createNeuronPair({
+        urls: { glb: glbFlightLUrl, swc: { 10010: swcGfLUrl, 802401: swcPsiUrl, 802544: swcDlmUrl } },
+        meta: metaFlightL,
+        handoff: handoffFlightL,
+        reference: metaL.normalization,
+      }),
+      { hotspotId: 'escape_GF_L', behaviorId: 'escape_takeoff', playBehavior: 'escape_flight' },
+    ),
+    linkPairs(
+      await createNeuronPair({
+        urls: { glb: glbJumpRUrl, swc: { 10001: swcGfRUrl, 800146: swcTtmRUrl } },
+        meta: metaJumpR,
+        handoff: handoffJumpR,
+        reference: metaL.normalization,
+      }),
+      await createNeuronPair({
+        urls: { glb: glbFlightRUrl, swc: { 10001: swcGfRUrl, 802401: swcPsiUrl, 802544: swcDlmUrl } },
+        meta: metaFlightR,
+        handoff: handoffFlightR,
+        reference: metaL.normalization,
+      }),
+      { hotspotId: 'escape_GF_R', behaviorId: 'escape_takeoff', playBehavior: 'escape_flight' },
+    ),
   ];
   pairs.forEach((p) => (p.behaviorId = BEHAVIOR_ALIASES[p.behaviorId] ?? p.behaviorId));
   pairs.forEach((p) => brainPane.scene.add(p.group));
@@ -403,7 +461,10 @@ async function boot() {
       if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
       game.onProbe(pair.behaviorId);
       if (pair.behaviorId === 'feed') beginFollow(); // feeding only: the camera glides in during the pulse and arrives as the behavior starts
-      pair.firePulse(() => runner.start(pair.behaviorId));
+      pair.firePulse(() => {
+        collisions.begin();
+        runner.start(pair.playBehavior ?? pair.behaviorId);
+      });
     },
     onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
   });
@@ -424,6 +485,7 @@ async function boot() {
     pairs.forEach((p) => p.update(dt * 1000));
     runner.update(dt * 1000);
     arena.update(dt * 1000);
+    collisions.update();
     updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
     updateLanding(dt);
     fly.update(dt);
@@ -433,12 +495,14 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, arena, pairs, fly, runner, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, arena, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
   // Start of the level: wait for the opening video (level 1), fly the fly in and land it, then show the level card.
   await introDone;
   if (intro) intro.hide();
   if (playLanding) await landFly();
+  collisions.reset();
+  collisions.enabled = true;
   game.begin();
 }
 

@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "escape_flight_L.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [
+      50048.0,
+      40192.0,
+      55104.0
+    ],
+    "scale": 0.0002532414910858995,
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "10010",
+      "name": "DNp01(GF)_L",
+      "role": "clickable_hotspot",
+      "glb_object_name": "neuron_10010",
+      "swc_file": "10010.swc",
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "802401",
+      "name": "PSI_L",
+      "role": "relay",
+      "glb_object_name": "neuron_802401",
+      "swc_file": "802401.swc"
+    },
+    {
+      "body_id": "802544",
+      "name": "DLMn c-f_R",
+      "role": "motor_output",
+      "glb_object_name": "neuron_802544",
+      "swc_file": "802544.swc"
+    }
+  ],
+  "connections": [
+    {
+      "source_body_id": "10010",
+      "target_body_id": "802401",
+      "weight": 9,
+      "direction": "10010_to_802401"
+    },
+    {
+      "source_body_id": "802401",
+      "target_body_id": "802544",
+      "weight": 67,
+      "direction": "802401_to_802544"
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "escape_flight_L",
+    "behavior_id": "flight",
+    "pulse_order": [
+      "10010",
+      "802401",
+      "802544"
+    ],
+    "branch_level_pulse_source": "swc"
+  }
+}

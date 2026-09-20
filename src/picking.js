@@ -19,7 +19,21 @@ export function createPicker({ domElement, camera, getTargets, onPick, onHover }
     const rect = domElement.getBoundingClientRect();
     pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
-    return raycaster.intersectObjects(getTargets(), false)[0];
+    const hits = raycaster.intersectObjects(getTargets(), false);
+    if (hits.length < 2) return hits[0];
+    // Click spheres can overlap (hotspots that sit close together): give the click to the one whose centre is
+    // nearest the ray, not the one the ray happens to enter first.
+    const centre = new THREE.Vector3();
+    let best = hits[0];
+    let bestD = Infinity;
+    for (const h of hits) {
+      const d = raycaster.ray.distanceToPoint(h.object.getWorldPosition(centre));
+      if (d < bestD) {
+        bestD = d;
+        best = h;
+      }
+    }
+    return best;
   }
 
   domElement.addEventListener('pointerup', (e) => {

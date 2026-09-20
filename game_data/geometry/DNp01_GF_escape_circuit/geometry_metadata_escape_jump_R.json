@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "escape_jump_R.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [
+      41408.0,
+      42464.0,
+      60736.0
+    ],
+    "scale": 0.00022226173541963016,
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "10001",
+      "name": "DNp01(GF)_R",
+      "role": "clickable_hotspot",
+      "glb_object_name": "neuron_10001",
+      "swc_file": "10001.swc",
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "800146",
+      "name": "TTMn_R",
+      "role": "motor_output",
+      "glb_object_name": "neuron_800146",
+      "swc_file": "800146.swc"
+    }
+  ],
+  "connections": [
+    {
+      "source_body_id": "10001",
+      "target_body_id": "800146",
+      "weight": 70,
+      "direction": "10001_to_800146"
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "escape_jump_R",
+    "behavior_id": "escape_takeoff",
+    "pulse_order": [
+      "10001",
+      "800146"
+    ],
+    "branch_level_pulse_source": "swc"
+  }
+}

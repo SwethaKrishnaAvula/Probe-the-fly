@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "derived": true,
+  "derived_note": "Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node in the brain-most tenth of the hotspot neuron. Replace with the real file.",
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "escape_jump_L.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [
+      56896,
+      42464,
+      59520
+    ],
+    "scale": 0.00022776967930029153,
+    "target_largest_dimension": 20,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "10010",
+      "name": "DNp01",
+      "role": "clickable_hotspot",
+      "glb_object_name": "10010",
+      "swc_file": "10010.swc",
+      "color_rgba": [
+        0.05,
+        0.8,
+        0.2,
+        1
+      ],
+      "hotspot_center_game": [
+        1.1264349489795917,
+        -2.364818695335277,
+        -8.77286807580175
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "804642",
+      "name": "TTMn",
+      "role": "motor_output",
+      "glb_object_name": "804642",
+      "swc_file": "804642.swc",
+      "color_rgba": [
+        0.9,
+        0.05,
+        0.55,
+        1
+      ]
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "escape_jump_L",
+    "behavior_id": "escape_takeoff",
+    "pulse_order": [
+      "10010",
+      "804642"
+    ],
+    "branch_level_pulse_source": "swc"
+  }
+}

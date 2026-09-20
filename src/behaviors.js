@@ -11,6 +11,13 @@
 export const FLY_DIST = 10.3; // arena units per walk_forward
 export const FLY_MS = 2400;
 const FLY_LIFT = 0.55;
+// The escape: the giant fiber's jump, then a sustained forward flight (escape_takeoff is the jump alone).
+const ESCAPE_MS = 3400;
+const ESCAPE_DIST = 6.0;
+const ESCAPE_LIFT = 1.3;
+// Object tracking: pursue. Swivel toward the target (if the level has one), then fly forward.
+const TRACK_MS = 2000;
+const TRACK_DIST = 3.5;
 // A turn is an airborne arc: the fly lifts off, beats its wings (the one on the OUTSIDE of the turn harder, so a left
 // turn is driven by the right wing), banks into the turn, flies a short way forward and lands.
 export const TURN_RAD = Math.PI / 2; // per turn click: 90 degrees
@@ -107,6 +114,19 @@ export function createBehaviorRunner(fly, world) {
         return p > 0.15 && p < 0.9 ? advance(2.6 * c.dp) : false;
       },
     },
+    // Jump, then keep flying: a quick rise with the wings buzzing hard, a long forward flight up in the air, then down.
+    escape_flight: {
+      ms: ESCAPE_MS,
+      begin: () => fly.setAction('stop'),
+      tick: (p, c) => {
+        const air = Math.min(smooth(Math.min(1, p / 0.2)), smooth(Math.min(1, (1 - p) / 0.15)));
+        fly.pose.flap = air;
+        fly.pose.spread = 0.8 * air;
+        fly.pose.lift = (ESCAPE_LIFT + 0.08 * Math.sin(p * 30)) * air;
+        fly.pose.pitch = 0.35 * (1 - smooth(Math.min(1, p / 0.3))) * air; // nose up in the jump, level in the flight
+        return p > 0.12 && p < 0.9 ? advance((ESCAPE_DIST * c.dp) / 0.78) : false;
+      },
+    },
     groom_head: {
       ms: 2200,
       begin: () => fly.setAction('stop'),
@@ -138,16 +158,26 @@ export function createBehaviorRunner(fly, world) {
         fly.pose.song = 0.55 * Math.sin(Math.PI * Math.min(1, p * 1.2));
       },
     },
-    // Whole body swivels to keep the target in sight.
+    // Pursuit: the whole body swivels toward the target (if there is one), then the fly flies forward after it, up in
+    // the air with both wings beating. It never flies onto the target. With no target (the discovery level) it
+    // simply flies forward.
     object_track: {
-      ms: 900,
+      ms: TRACK_MS,
       begin: (c) => {
-        fly.setAction('gait', 1);
+        fly.setAction('stop'); // flying, not walking
         c.from = root.rotation.y;
         c.delta = world.target ? shortestDelta(c.from, headingTo(world.target)) : 0;
       },
       tick: (p, c) => {
-        root.rotation.y = c.from + c.delta * smooth(p);
+        const air = envelope(p, 0.2);
+        fly.pose.lift = FLY_LIFT * air;
+        fly.pose.spread = 0.6 * air;
+        fly.pose.flapLeft = air;
+        fly.pose.flapRight = air;
+        root.rotation.y = c.from + c.delta * smooth(Math.min(1, p / 0.4)); // swivel first
+        if (p < 0.25) return false;
+        if (world.target && Math.hypot(world.target.x - root.position.x, world.target.z - root.position.z) < 2.2) return true;
+        return advance((TRACK_DIST * c.dp) / 0.75);
       },
     },
     // Turn toward the smell, then walk up it (but never onto the target).
@@ -185,6 +215,35 @@ export function createBehaviorRunner(fly, world) {
         fly.pose.flap = 1;
         fly.pose.spread = envelope(p, 0.2);
         root.rotation.y = c.from + Math.PI * 2 * smooth(p);
+      },
+    },
+    // Hit something solid: a quick recoil, a hop and a dizzy wobble. collisions.js puts the fly back afterwards.
+    bonk: {
+      ms: 1000,
+      begin: () => fly.setAction('stop'),
+      tick: (p, c) => {
+        root.translateZ(-1.4 * c.dp * (1 - p)); // knocked back
+        fly.pose.lift = Math.sin(Math.PI * Math.min(1, p * 1.4)) * 0.35;
+        fly.pose.roll = 0.5 * Math.sin(p * 16) * (1 - p);
+        fly.pose.headTilt = 0.5 * Math.sin(p * 20) * (1 - p);
+        fly.pose.flap = 0.3 * (1 - p);
+      },
+    },
+    // Fell in the sink: sinks into the water, soaked, wings drooping, then shakes itself off.
+    soaked: {
+      ms: 1900,
+      begin: (c) => {
+        fly.setAction('stop');
+        c.y0 = root.position.y;
+      },
+      tick: (p, c) => {
+        const wet = envelope(p, 0.12);
+        root.position.y = c.y0 - 0.34 * wet;
+        fly.pose.wet = wet;
+        fly.pose.headDip = 0.5 * wet;
+        fly.pose.roll = 0.22 * Math.sin(p * 46) * wet * (p > 0.4 ? 1 : 0.3); // the shakes
+        fly.pose.flapLeft = p > 0.45 ? 0.3 * (1 - p) : 0;
+        fly.pose.flapRight = fly.pose.flapLeft;
       },
     },
   };

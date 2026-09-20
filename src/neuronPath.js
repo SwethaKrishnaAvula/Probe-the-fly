@@ -149,6 +149,16 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
   let pulse = null; // { t, onDone }
   let hovered = false;
   const hotspotMat = byId[ids[0]].material;
+  // Two circuits can contain the very same neuron (the giant fiber drives both a jump and a flight path), drawn twice
+  // at exactly the same place. While a pair pulses its meshes are pulled slightly toward the camera, so the lit copy
+  // is never fought over by a dim one (z-fighting).
+  const setInFront = (on) =>
+    ids.forEach((id) => {
+      const m = byId[id].material;
+      m.polygonOffset = on;
+      m.polygonOffsetFactor = on ? -2 : 0;
+      m.polygonOffsetUnits = on ? -2 : 0;
+    });
   const setBase = () => (hotspotMat.uniforms.uBase.value = hovered && !pulse ? BASE_HOVER : BASE_DIM);
 
   return {
@@ -169,6 +179,7 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
     firePulse(onDone) {
       if (pulse) return;
       pulse = { t: 0, onDone };
+      setInFront(true);
       setBase();
     },
 
@@ -186,9 +197,40 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
         const done = pulse.onDone;
         pulse = null;
         timing.forEach((s) => (byId[s.id].material.uniforms.uHead.value = -1));
+        setInFront(false);
         setBase();
         done?.();
       }
+    },
+  };
+}
+
+// One hotspot that fires two circuits at once. The escape giant fiber is one neuron with two downstream paths (jump and
+// flight), so each side has a single clickable hotspot (the primary's) and both paths light together.
+// behaviorId is what the game records (notebook, probe counts); playBehavior is what the fly performs.
+export function linkPairs(primary, secondary, { hotspotId, behaviorId, playBehavior }) {
+  const parts = [primary, secondary];
+  const group = new THREE.Group();
+  group.add(primary.group, secondary.group);
+  primary.hotspotMesh.userData.hotspotId = hotspotId; // clicks report the linked hotspot, not the jump circuit's own id
+  return {
+    group,
+    hotspotMesh: primary.hotspotMesh, // the secondary's click sphere is deliberately not exposed
+    hotspotId,
+    behaviorId,
+    playBehavior,
+    get busy() {
+      return parts.some((p) => p.busy);
+    },
+    setHover(on) {
+      parts.forEach((p) => p.setHover(on)); // both copies of the shared neuron, so they never differ in brightness
+    },
+    firePulse(onDone) {
+      let left = parts.length;
+      parts.forEach((p) => p.firePulse(() => --left === 0 && onDone?.()));
+    },
+    update(dtMs) {
+      parts.forEach((p) => p.update(dtMs));
     },
   };
 }
