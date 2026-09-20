@@ -1,0 +1,3 @@
+source_label,source_body_id,bodyId_pre,bodyId_post,weight,type_pre,type_post,instance_pre,instance_post,status_pre,status_post,conn_roiInfo
+pIP10_L,523998,523998,804090,171,pIP10,TN1a_i,pIP10_L,TN1a_i_L,Traced,Traced,"{'IntTct': {'post': 13}, 'LTct': {'post': 132}, 'LegNp(T1)(L)': {'post': 2}, 'VNC': {'post': 171}, 'VNC-unspecified': {'post': 22}, 'WTct(UTct-T2)(L)': {'post': 2}}"
+TN1a_i_L,804090,804090,800241,43,TN1a_i,hg1 MN,TN1a_i_L,hg1 MN_L,Traced,Traced,"{'VNC': {'post': 43}, 'WTct(UTct-T2)(L)': {'post': 43}}"

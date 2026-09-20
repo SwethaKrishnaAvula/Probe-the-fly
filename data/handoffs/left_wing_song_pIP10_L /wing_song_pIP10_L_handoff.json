@@ -1,0 +1,73 @@
+{
+  "hotspot_id": "wing_song_pIP10_L",
+  "behavior_id": "wing_song",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 523998,
+    "type": "pIP10",
+    "instance": "pIP10_L",
+    "side": "L",
+    "superclass": "descending_neuron"
+  },
+  "path": [
+    {
+      "body_id": 523998,
+      "type": "pIP10",
+      "instance": "pIP10_L",
+      "superclass": "descending_neuron",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 804090,
+      "type": "TN1a_i",
+      "instance": "TN1a_i_L",
+      "superclass": "vnc_intrinsic",
+      "role": "premotor_relay",
+      "incoming_connection_weight": 171
+    },
+    {
+      "body_id": 800241,
+      "type": "hg1 MN",
+      "instance": "hg1 MN_L",
+      "superclass": "vnc_motor",
+      "role": "motor_output",
+      "incoming_connection_weight": 43
+    }
+  ],
+  "route": {
+    "strategy": "descending_neuron_via_vnc_premotor_relay",
+    "hop_count": 2,
+    "connection_rois": ["VNC", "LTct", "IntTct", "LegNp(T1)(L)", "WTct(UTct-T2)(L)"]
+  },
+  "evidence": {
+    "behavior_citation": "von Philipsborn et al. 2011, Neuronal Control of Drosophila Courtship Song, Neuron 69(3):509-522 (pIP10 command neuron); Shirangi, Wong, Truman & Stern 2016, Doublesex Regulates the Connectivity of a Neural Circuit Controlling Drosophila Male Courtship Song, Developmental Cell 37(6):533-544 (TN1A activates hg1 motoneuron, causal statement); Shirangi, Stern & Truman 2013, Motor control of Drosophila courtship song, Cell Reports 5:678-686 (hg1 motoneuron silencing eliminates sine song specifically)",
+    "confidence_note": "Every node AND every functional link in this chain is independently confirmed in prior literature, not just connectivity-inferred -- a stronger evidentiary standard than most other hotspots. One open question flagged, not resolved: dPR1 (a different premotor neuron, functionally classified as 'pulse-promoting') anatomically connects to hg1 MN more strongly than TN1a does, despite TN1a being the literature-assigned relay for this specific muscle. Neuroglancer-confirmed superclasses match expected roles exactly (descending_neuron / vnc_intrinsic / vnc_motor).",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [171, 43],
+    "path_strength_score": 8.931297
+  },
+  "math_outputs": {
+    "pulse_timing": [
+      { "body_id": 523998, "t_start_ms": 0, "t_end_ms": 300 },
+      { "body_id": 804090, "t_start_ms": 300, "t_end_ms": 600 },
+      { "body_id": 800241, "t_start_ms": 600, "t_end_ms": 900 }
+    ],
+    "normalized_strength": "PENDING -- requires Shreya's full-batch script rerun across all hotspots, not calculable from this file alone",
+    "brightness": [
+      { "body_id": 523998, "value": 1.0 },
+      { "body_id": 804090, "value": 0.895, "note": "PROVISIONAL -- computed against 513 (strongest edge weight observed anywhere in this project so far, the dPR1-dPR1 reciprocal connection), not yet the true global max from a full rerun" },
+      { "body_id": 800241, "value": 0.764, "note": "PROVISIONAL -- same caveat as above" }
+    ]
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/pIP10/neurons.csv",
+    "data/results/wing_song_pIP10_review/downstream_comparison.csv",
+    "data/results/wing_song_pIP10_L_to_TN1a_i_L/paths_all.csv",
+    "data/results/TN1a__/neurons.csv",
+    "data/results/wing_song_TN1a___review/downstream_comparison.csv"
+  ]
+}
