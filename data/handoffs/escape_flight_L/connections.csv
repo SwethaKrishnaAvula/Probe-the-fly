@@ -1,0 +1,3 @@
+bodyId_pre,bodyId_post,weight,type_pre,type_post,instance_pre,instance_post,status_pre,status_post,cropped_pre,cropped_post,conn_roiInfo,roi_names
+10010,802401,9,DNp01,PSI,DNp01(GF)_L,PSI_L,Traced,Traced,,,"{'LTct': {'post': 9}, 'VNC': {'post': 9}}","['LTct', 'VNC']"
+802401,802544,67,PSI,DLMn c-f,PSI_L,DLMn c-f_R,Traced,Traced,,,"{'NTct(UTct-T1)(R)': {'post': 2}, 'PDMN(R)': {'post': 44}, 'VNC': {'post': 67}, 'VNC-unspecified': {'post': 2}, 'WTct(UTct-T2)(R)': {'post': 19}}","['NTct(UTct-T1)(R)', 'PDMN(R)', 'VNC', 'VNC-unspecified', 'WTct(UTct-T2)(R)']"
