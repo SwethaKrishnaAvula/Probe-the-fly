@@ -41,9 +41,9 @@ export function createGame({ levels, entries, brain, arena, fly, runner, hud, ca
     epoch++;
     timers = [];
     runner.stop();
-    fly.object.position.set(0, 0, 0);
+    arena.configure(level.arena, level.id);
+    fly.object.position.copy(arena.world.start);
     fly.object.rotation.y = 0;
-    arena.configure(level.arena);
     brain.setAvailable(level.hotspots);
     brain.setHint(level.first_click_hint ?? null);
 
@@ -257,6 +257,7 @@ export function createGame({ levels, entries, brain, arena, fly, runner, hud, ca
         due.forEach((t) => t.epoch === epoch && t.fn());
       }
       runner.update(dtMs);
+      arena.update(dtMs);
       updateShadow(dtMs);
     },
   };

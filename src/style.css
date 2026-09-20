@@ -306,3 +306,106 @@ button.primary {
   gap: 12px;
   margin-top: 20px;
 }
+
+/* ---- Right screen: grab cursor ---- */
+#arena-pane canvas {
+  cursor: grab;
+}
+
+#arena-pane canvas:active {
+  cursor: grabbing;
+}
+
+/* ---- Opening video over the whole screen ---- */
+#cinematic {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #a9d8f0;
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+
+#cinematic.fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cin-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(30, 40, 70, 0.7);
+  z-index: 3;
+  padding: 0 24px;
+}
+
+.cin-skip {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  font-size: 8px;
+  background: rgba(22, 27, 46, 0.7);
+}
+
+.cin-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff1d6;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* View buttons at the top right of the arena. */
+#view-bar {
+  position: absolute;
+  top: 100px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+#view-bar button {
+  font-size: 8px;
+  padding: 8px 11px;
+  background: var(--panel);
+}
+
+#arena-pane canvas {
+  touch-action: none;
+}
+
+/* Nav bar along the bottom of the arena. */
+#nav-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-size: 8px;
+  color: var(--dim);
+  text-transform: uppercase;
+  touch-action: none;
+  user-select: none;
+}
+
+#nav-bar button {
+  font-size: 14px;
+  padding: 6px 22px;
+  touch-action: none;
+}
