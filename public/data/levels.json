@@ -21,7 +21,7 @@
       "notebook_visible": false,
       "click_budget": 4,
       "arena": {
-        "pie_position": [4, 0, 2],
+        "pie_position": [21.3, 0, -0.2],
         "pie_radius": 0.5,
         "shadow": null
       },
@@ -38,7 +38,7 @@
       "notebook_visible": false,
       "click_budget": 6,
       "arena": {
-        "pie_position": [4, 0, 2],
+        "pie_position": [21.3, 0, 1.6],
         "pie_radius": 0.5,
         "shadow": {
           "active_window_ms": [3000, 4000],
@@ -60,7 +60,7 @@
       "notebook_visible": false,
       "click_budget": 5,
       "arena": {
-        "pie_position": [-4, 0, 2],
+        "pie_position": [-9.67, 0, -0.64],
         "pie_radius": 0.5,
         "shadow": null
       },

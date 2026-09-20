@@ -103,16 +103,19 @@ const SCENES = {
   level_4_lesion: {
     mirrored: true,
     start: [-9.3, 0, 2.6],
-    pie: [12, 0, 2.4],
+    // The left-turn hotspot is dead, so the fly gets left with three right turns and one flight: the pie sits where
+    // that ends (the flight is 10.3 long), in the middle of the counter. Its table takes x -3.4..4.2, z -0.8..4.8, so
+    // the hurdle, the salt boxes and the second fruit lane were moved out of its way.
+    pie: [0.37, 0, 1.96],
     hasPie: true,
-    board: [-2.0, 0, -1.4],
+    board: [6.4, 0, -1.4], // beside the pie table, not in front of it
     sill: { cx: 1.0, flowers: 0.2 },
     items: [
       { type: 'stove', x: 5.2, z: 5.9, yaw: 0.1 },
       { type: 'wall', x: -5.6, z: 1.6, along: 'z', n: 2, rows: 3, yaw: 0.25 },
-      { type: 'hurdle', x: 2.6, z: 2.6, w: 2.6, yaw: 0.4 },
-      { type: 'fruit', lanes: [{ x: 7.4, z: [-2.8, 3.9] }, { x: -3.6, z: [0.7, 7.0] }] },
-      { type: 'saltbox', x: -0.2, z: 4.6, n: 3 },
+      { type: 'hurdle', x: -7.4, z: 3.6, w: 2.6, yaw: 0.4 },
+      { type: 'fruit', lanes: [{ x: 7.4, z: [-2.8, 3.9] }, { x: -4.4, z: [0.7, 7.0] }] },
+      { type: 'saltbox', x: 7.0, z: 4.6, n: 3 },
     ],
   },
   level_5_threshold: {

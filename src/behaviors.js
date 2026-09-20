@@ -1,10 +1,16 @@
 // Scripted fly behaviors. Every behavior is hand-authored animation (read.md rule 20: the last step
 // from motor output to animation is hand-authored). The step sizes below were tuned so the levels in
-// levels.json are winnable in exactly their click budgets. Changing the turn (now a 90 degree airborne arc) changes
-// that; see the level check in the commit message before relying on it.
+// levels.json are winnable in exactly their click budgets, with the kitchen's real layout (kitchen.js SCENES):
+//   level 2: turn_right, walk_forward, walk_forward, feed        (4 clicks)
+//   level 3: the same, plus a spare click for the shadow's freeze_stop
+//   level 4: turn_right x3 (turn_left is dead), walk_forward, feed  (5 clicks)
+// Changing FLY_DIST, TURN_RAD or TURN_FORWARD, or a start or pie in kitchen.js, changes that: re-check the levels.
 
-export const WALK_DIST = 4.5; // arena units per walk_forward
-export const WALK_MS = 2000;
+// walk_forward is a short straight flight: the fly lifts off, beats both wings equally, flies a fixed distance
+// and lands. (The behavior id stays walk_forward because levels.json and the notebook use it.)
+export const FLY_DIST = 10.3; // arena units per walk_forward
+export const FLY_MS = 2400;
+const FLY_LIFT = 0.55;
 // A turn is an airborne arc: the fly lifts off, beats its wings (the one on the OUTSIDE of the turn harder, so a left
 // turn is driven by the right wing), banks into the turn, flies a short way forward and lands.
 export const TURN_RAD = Math.PI / 2; // per turn click: 90 degrees
@@ -27,8 +33,9 @@ export function createBehaviorRunner(fly, world) {
   let cur = null;
   const root = fly.object;
 
-  // Move along the fly's facing. Returns true if the walk should halt (arena edge or reached pie).
-  function advance(dist) {
+  // Move along the fly's facing. Returns true if the move should halt (arena edge, or reached the pie when
+  // stopAtPie is set). Flights cover a fixed distance and land themselves, so they do not stop at the pie.
+  function advance(dist, { stopAtPie = false } = {}) {
     root.translateZ(dist);
     const b = world.bounds;
     const p = root.position;
@@ -38,7 +45,7 @@ export function createBehaviorRunner(fly, world) {
       p.z = Math.min(b.maxZ, Math.max(b.minZ, p.z));
       halt = true;
     }
-    if (world.pie && dist > 0) {
+    if (stopAtPie && world.pie && dist > 0) {
       // A fly stops when it reaches pie, which also keeps a long walk from overshooting the radius.
       const dx = p.x - world.pie.pos.x;
       const dz = p.z - world.pie.pos.z;
@@ -69,9 +76,16 @@ export function createBehaviorRunner(fly, world) {
 
   const BEHAVIORS = {
     walk_forward: {
-      ms: WALK_MS,
-      begin: () => fly.setAction('gait', 1),
-      tick: (p, c) => advance(WALK_DIST * c.dp),
+      ms: FLY_MS,
+      begin: () => fly.setAction('stop'), // legs off the ground: this is flight, not walking
+      tick: (p, c) => {
+        const air = envelope(p, 0.15); // 0 on the ground, 1 while airborne
+        fly.pose.lift = FLY_LIFT * air;
+        fly.pose.spread = 0.6 * air;
+        fly.pose.flapLeft = air; // straight flight: both wings beat equally
+        fly.pose.flapRight = air;
+        return advance(FLY_DIST * c.dp);
+      },
     },
     // Left is +rotation.y (the fly's left is +X), right is -rotation.y.
     turn_left: turn(1),
