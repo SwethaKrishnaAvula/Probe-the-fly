@@ -68,7 +68,7 @@ const SCENES = {
     ],
   },
   // As briefed: sink, hand, stove under the window, pie and tea at the far right.
-  level_2_sugar: {
+  level_2_pie: {
     start: [-9.3, 0, 2.6],
     pie: [12, 0, 2.4],
     hasPie: true,
@@ -582,7 +582,7 @@ export function createKitchen(scene) {
   // The fly comes in from outside: `entry` is beyond the window, `window` is the opening in the back wall.
   const world = {
     bounds: { minX: -16.2, maxX: 11.2, minZ: BOUNDS_Z[0], maxZ: BOUNDS_Z[1] },
-    sugar: null,
+    pie: null,
     target: null,
     obstacles,
     start: toWorld(SCENES.level_1_discovery.start),
@@ -665,7 +665,7 @@ export function createKitchen(scene) {
 
       world.start = toWorld([F * sc.start[0], 0, sc.start[2]]);
       world.start.y = TABLE_H + 0.03;
-      world.sugar = null;
+      world.pie = null;
       world.target = null;
       ring.visible = false;
       glow.visible = false;
@@ -673,10 +673,10 @@ export function createKitchen(scene) {
       hemi.intensity = 1.05;
       sun.color.set(0xffe2b4);
 
-      if (cfg?.sugar_position) {
+      if (cfg?.pie_position) {
         // "Fly near the pie": the win radius is measured from the pie's centre, out past its rim.
-        world.sugar = { pos: toWorld([F * sc.pie[0], 0, sc.pie[2]]), radius: PIE_R + cfg.sugar_radius };
-        ring.scale.setScalar(world.sugar.radius + 0.55);
+        world.pie = { pos: toWorld([F * sc.pie[0], 0, sc.pie[2]]), radius: PIE_R + cfg.pie_radius };
+        ring.scale.setScalar(world.pie.radius + 0.55);
         ring.visible = true;
         glow.visible = true;
       }

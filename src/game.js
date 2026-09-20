@@ -132,8 +132,8 @@ export function createGame({ levels, entries, brain, arena, fly, runner, hud, ca
         if (ready) won = true;
         else behavior = 'half_hearted_song';
       }
-    } else if (id === 'feed' && arena.world.sugar) {
-      const { pos, radius } = arena.world.sugar;
+    } else if (id === 'feed' && arena.world.pie) {
+      const { pos, radius } = arena.world.pie;
       won = fly.object.position.distanceTo(pos) <= radius;
     }
 

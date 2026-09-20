@@ -8,7 +8,7 @@ import { bushTime, bushMaterial, makeBushGeometry, makeCampfire, makeStartBoard,
 // invisible. The only things that move are the rolling balls; the fly's behaviors live in behaviors.js.
 //
 // levels.json positions are [x, y, z] with +x on the fly's RIGHT and +z straight ahead of the start
-// (level 2's sugar sits right of the start and only turn_right is available; level 4's sits left).
+// (level 2's pie sits right of the start and only turn_right is available; level 4's sits left).
 // The fly's own frame has its left on +X, so world x is the json x negated.
 export { toWorld };
 
@@ -474,7 +474,7 @@ export function createArena(scene) {
       ],
       seats: { n: 5, x: -2.6, z: -6.2, stepX: 1.15, stepZ: 0, face: -Math.PI / 2 },
     },
-    level_2_sugar: {
+    level_2_pie: {
       towers: [{ x: 9.2, z: 5.5, yaw: 0.65, rows: 4, cols: 3 }],
       crates: [
         { x: -8.5, z: 1.5, yaw: 1.1 },
@@ -594,10 +594,10 @@ export function createArena(scene) {
   }
 
   // ---- Level props (rebuilt by configure) ----
-  // The apple (the "sugar" of levels.json): glossy, yellow at the lit shoulder fading to deep red, with
+  // The apple (the "pie" of levels.json): glossy, yellow at the lit shoulder fading to deep red, with
   // freckles, a dent at the top and a stubby brown stem. A soft ring marks the win radius.
-  const sugar = new THREE.Group();
-  sugar.add(makeApple());
+  const pie = new THREE.Group();
+  pie.add(makeApple());
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.93, 1, 48),
     new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.6, side: THREE.DoubleSide }),
@@ -606,9 +606,9 @@ export function createArena(scene) {
   ring.position.y = 0.015;
   const glow = new THREE.PointLight(0xffc27a, 5, 4.5, 2);
   glow.position.y = 1;
-  sugar.add(ring, glow);
-  sugar.visible = false;
-  scene.add(sugar);
+  pie.add(ring, glow);
+  pie.visible = false;
+  scene.add(pie);
 
   // The shadow (level 3): a bird's silhouette waiting past the far edge. Its telegraph strip and sweep
   // are driven by game.js through arena.shadow.
@@ -682,7 +682,7 @@ export function createArena(scene) {
       { type: 'wall', x: 4.8, z: 1.5, along: 'z', n: 3, rows: 2 },
       { type: 'wall', x: -4.8, z: 6.2, along: 'x', n: 2, rows: 3, yaw: 0.4 },
     ],
-    level_2_sugar: [
+    level_2_pie: [
       // A stream between the fly's side and the apple's: the fly has to cross it. Balls stay on the far bank.
       { type: 'stream', x: -1.7, w: 2.4 },
       { type: 'wall', x: 2.2, z: -0.2, along: 'z', n: 3, rows: 2 },
@@ -942,7 +942,7 @@ export function createArena(scene) {
     const blockers = [
       ...occupied,
       { x: -world.start.x, z: world.start.z, r: 2.4 },
-      ...(world.sugar ? [{ x: -world.sugar.pos.x, z: world.sugar.pos.z, r: 2.4 }] : []),
+      ...(world.pie ? [{ x: -world.pie.pos.x, z: world.pie.pos.z, r: 2.4 }] : []),
       ...(world.target ? [{ x: -world.target.x, z: world.target.z, r: 3.4 }] : []),
     ];
     obstacles.forEach((ob) => {
@@ -995,14 +995,14 @@ export function createArena(scene) {
   // One campfire per level, off to a side the fly has no business going. json coordinates.
   const FIRES = {
     level_1_discovery: [7.4, 3.4],
-    level_2_sugar: [7.6, 1.8],
+    level_2_pie: [7.6, 1.8],
     level_3_shadow: [7.4, 1.4],
     level_4_lesion: [-7.4, 3.6],
     level_5_threshold: [7.2, 5.4],
   };
 
   // Shared with the behavior runner: it reads these fields every frame.
-  const world = { bounds: BOUNDS, sugar: null, target: null, obstacles, start: toWorld(START_DEFAULT) };
+  const world = { bounds: BOUNDS, pie: null, target: null, obstacles, start: toWorld(START_DEFAULT) };
   world.start.y = 0.055; // the fly stands on the start board
 
   const setMood = (hex) => {
@@ -1028,20 +1028,20 @@ export function createArena(scene) {
       claim(fx, fz, 3.2);
       buildLevel(levelId);
       buildScenery(levelId);
-      world.sugar = null;
+      world.pie = null;
       world.target = null;
-      sugar.visible = false;
+      pie.visible = false;
       bird.visible = false;
       flower.visible = false;
       pollen.visible = false;
       this.shadow.hide();
       setMood(MOODS.calm);
 
-      if (cfg?.sugar_position) {
-        world.sugar = { pos: toWorld(cfg.sugar_position), radius: cfg.sugar_radius };
-        sugar.position.copy(world.sugar.pos);
-        ring.scale.setScalar(cfg.sugar_radius);
-        sugar.visible = true;
+      if (cfg?.pie_position) {
+        world.pie = { pos: toWorld(cfg.pie_position), radius: cfg.pie_radius };
+        pie.position.copy(world.pie.pos);
+        ring.scale.setScalar(cfg.pie_radius);
+        pie.visible = true;
       }
       if (cfg?.shadow) {
         bird.visible = true;

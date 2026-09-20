@@ -23,11 +23,11 @@ const envelope = (p, edge = 0.2) => smooth(Math.min(1, p / edge, (1 - p) / edge)
 const shortestDelta = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
 export function createBehaviorRunner(fly, world) {
-  // world: { bounds: {minX,maxX,minZ,maxZ}, sugar: {pos, radius} | null, target: Vector3 | null }
+  // world: { bounds: {minX,maxX,minZ,maxZ}, pie: {pos, radius} | null, target: Vector3 | null }
   let cur = null;
   const root = fly.object;
 
-  // Move along the fly's facing. Returns true if the walk should halt (arena edge or reached sugar).
+  // Move along the fly's facing. Returns true if the walk should halt (arena edge or reached pie).
   function advance(dist) {
     root.translateZ(dist);
     const b = world.bounds;
@@ -38,11 +38,11 @@ export function createBehaviorRunner(fly, world) {
       p.z = Math.min(b.maxZ, Math.max(b.minZ, p.z));
       halt = true;
     }
-    if (world.sugar && dist > 0) {
-      // A fly stops when it reaches sugar, which also keeps a long walk from overshooting the radius.
-      const dx = p.x - world.sugar.pos.x;
-      const dz = p.z - world.sugar.pos.z;
-      if (Math.hypot(dx, dz) <= world.sugar.radius) halt = true;
+    if (world.pie && dist > 0) {
+      // A fly stops when it reaches pie, which also keeps a long walk from overshooting the radius.
+      const dx = p.x - world.pie.pos.x;
+      const dz = p.z - world.pie.pos.z;
+      if (Math.hypot(dx, dz) <= world.pie.radius) halt = true;
     }
     return halt;
   }

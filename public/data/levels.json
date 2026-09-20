@@ -14,32 +14,32 @@
       "intro_text": "This is a working fly brain -- real wiring, not a diagram. Click anywhere lit up and watch what happens. There are no wrong answers here."
     },
     {
-      "id": "level_2_sugar",
-      "title": "Reach the Sugar",
-      "goal_text": "Reach the sugar.",
+      "id": "level_2_pie",
+      "title": "Reach the Pie",
+      "goal_text": "Reach the pie.",
       "type": "task",
       "notebook_visible": false,
       "click_budget": 4,
       "arena": {
-        "sugar_position": [4, 0, 2],
-        "sugar_radius": 0.5,
+        "pie_position": [4, 0, 2],
+        "pie_radius": 0.5,
         "shadow": null
       },
-      "win_condition": "fly enters sugar_radius of sugar_position, then feed hotspot is clicked while fly remains inside sugar_radius.",
+      "win_condition": "fly enters pie_radius of pie_position, then feed hotspot is clicked while fly remains inside pie_radius.",
       "fail_condition": "click_budget exhausted before win_condition is met.",
       "hotspots": ["walk_forward", "turn_right", "feed"],
       "intro_text": "Time to put what you found to use. No notebook this time -- just what you remember."
     },
     {
       "id": "level_3_shadow",
-      "title": "Sugar + Shadow",
-      "goal_text": "Reach the sugar. Don't let the shadow catch you.",
+      "title": "Pie + Shadow",
+      "goal_text": "Reach the pie. Don't let the shadow catch you.",
       "type": "task",
       "notebook_visible": false,
       "click_budget": 6,
       "arena": {
-        "sugar_position": [4, 0, 2],
-        "sugar_radius": 0.5,
+        "pie_position": [4, 0, 2],
+        "pie_radius": 0.5,
         "shadow": {
           "active_window_ms": [3000, 4000],
           "telegraph_lead_ms": 600,
@@ -47,10 +47,10 @@
           "hit_area": "arena_midpoint_band"
         }
       },
-      "win_condition": "fly enters sugar_radius of sugar_position, then feed hotspot is clicked while fly remains inside sugar_radius, AND fly was not inside shadow's hit_area (unfrozen) during active_window_ms.",
+      "win_condition": "fly enters pie_radius of pie_position, then feed hotspot is clicked while fly remains inside pie_radius, AND fly was not inside shadow's hit_area (unfrozen) during active_window_ms.",
       "fail_condition": "fly is inside shadow's hit_area and NOT in a freeze_stop state at any point during active_window_ms -> immediate non-punishing startle/scatter animation, reset to just-before-shadow-event, deduct one click from click_budget. Also fails if click_budget exhausted before win_condition.",
       "hotspots": ["walk_forward", "freeze_stop", "turn_right", "feed"],
-      "intro_text": "Something's watching the sky. Reach the sugar, but don't ignore it."
+      "intro_text": "Something's watching the sky. Reach the pie, but don't ignore it."
     },
     {
       "id": "level_4_lesion",
@@ -60,12 +60,12 @@
       "notebook_visible": false,
       "click_budget": 5,
       "arena": {
-        "sugar_position": [-4, 0, 2],
-        "sugar_radius": 0.5,
+        "pie_position": [-4, 0, 2],
+        "pie_radius": 0.5,
         "shadow": null
       },
       "dead_hotspot": "turn_left",
-      "win_condition": "fly enters sugar_radius of sugar_position (via the LIVE twin, turn_right, since sugar sits on the lesioned side), then feed hotspot is clicked while fly remains inside sugar_radius.",
+      "win_condition": "fly enters pie_radius of pie_position (via the LIVE twin, turn_right, since pie sits on the lesioned side), then feed hotspot is clicked while fly remains inside pie_radius.",
       "fail_condition": "click_budget exhausted before win_condition is met. Clicking dead_hotspot produces no motion/reaction (and after the 2nd such click, plays a small confused/idle animation as a nudge -- does not reveal the answer).",
       "hotspots": ["walk_forward", "turn_left", "turn_right", "feed"],
       "intro_text": "One of your usual hotspots isn't responding. The behavior still exists somewhere -- find where."
@@ -78,7 +78,7 @@
       "notebook_visible": false,
       "click_budget": 5,
       "arena": {
-        "sugar_position": null,
+        "pie_position": null,
         "shadow": null,
         "target": "female_fly_present_offscreen_cue"
       },
