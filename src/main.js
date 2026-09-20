@@ -8,6 +8,7 @@ import { createBehaviorRunner } from './behaviors.js';
 import { createNeuronPair, linkPairs } from './neuronPath.js';
 import { createStandInHotspot } from './standIn.js';
 import { createRules } from './rules.js';
+import { createBrainShell } from './brainShell.js';
 import { createHud } from './hud.js';
 import { createMusic } from './music.js';
 import { createSfx } from './sfx.js';
@@ -476,6 +477,10 @@ async function boot() {
   pairs.forEach((p) => brainPane.scene.add(p.group));
   frameBrain(pairs.map((p) => p.group));
   const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));
+  // The glassy enclosure round the wiring: decoration only, never picked, and not part of the camera framing below, so
+  // nothing about the hotspots (where they are on screen, or how they respond) changes.
+  const shell = createBrainShell();
+  brainPane.scene.add(shell.group);
   rules = createRules({
     levels: levelsData,
     entries: levelEntries,
@@ -553,7 +558,7 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, music, sfx, arena, rules, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, shell, music, sfx, arena, rules, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
   // Start of the level: wait for the opening video (level 1), fly the fly in and land it, then show the level card.
   await introDone;
