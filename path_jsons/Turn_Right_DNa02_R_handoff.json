@@ -1,0 +1,58 @@
+{
+  "hotspot_id": "turn_right_DNa02_R",
+  "behavior_id": "turn_right",
+  "dataset": "male-cns:v1.0",
+  "hotspot": {
+    "body_id": 10360,
+    "type": "DNa02",
+    "instance": "DNa02_R",
+    "side": "R",
+    "superclass": "descending_neuron"
+  },
+  "path": [
+    {
+      "body_id": 10360,
+      "type": "DNa02",
+      "role": "hotspot",
+      "incoming_connection_weight": 0
+    },
+    {
+      "body_id": 801946,
+      "type": "Sternal anterior rotator MN",
+      "role": "motor_output",
+      "incoming_connection_weight": 134
+    }
+  ],
+  "route": {
+    "strategy": "descending_neuron_direct_motor",
+    "hop_count": 1,
+    "connection_rois": [
+      "LegNp(T2)(R)",
+      "VNC"
+    ]
+  },
+  "evidence": {
+    "behavior_citation": "Berg et al. 2026, Sexual dimorphism in the complete connectome of the Drosophila male central nervous system",
+    "confidence_note": "DNa02 is literature-associated with steering; this direct motor path is supported by Male CNS v1.0 connectivity.",
+    "connectivity_source": "Male CNS neuPrint v1.0"
+  },
+  "math_inputs": {
+    "raw_connection_weights": [
+      134
+    ],
+    "path_strength_score": 4.90527477843843
+  },
+  "math_outputs": {
+    "pulse_timing": null,
+    "normalized_strength": null,
+    "brightness": null
+  },
+  "hotspot_roi_counts_file": "hotspot_roi_counts.csv",
+  "source_files": [
+    "data/results/DNa02/neurons.csv",
+    "data/results/DNa02/roi_counts.csv",
+    "data/results/DNa02_R_10360_probe/downstream_all.csv",
+    "data/results/DNa02_R_10360_to_T3_rotator/best_path.csv",
+    "data/results/DNa02_R_10360_to_T3_rotator/path_scores.csv"
+  ]
+}
