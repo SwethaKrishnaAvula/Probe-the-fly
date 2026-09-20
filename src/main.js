@@ -38,6 +38,17 @@ import glbWingUrl from '../game_data/geometry/geometry_pIP10_L/wing_song_pIP10_L
 import swcWing1Url from '../game_data/geometry/geometry_pIP10_L/523998.swc?url';
 import swcWing2Url from '../game_data/geometry/geometry_pIP10_L/804090.swc?url';
 import swcWing3Url from '../game_data/geometry/geometry_pIP10_L/800241.swc?url';
+// Object tracking (LC10a_L -> AOTU041 -> AOTU064 -> aSP22). Real metadata from the geometry team.
+import metaTrack from '../game_data/geometry/object_track_LC10a_L/geometry_metadata_object_track_LC10a_L.json';
+import handoffTrack from '../path_jsons/math_filled/object_track_LC10a_L_handoff.json';
+import glbTrackUrl from '../game_data/geometry/object_track_LC10a_L/object_track_LC10a_L.glb?url';
+import swcTrack1Url from '../game_data/geometry/object_track_LC10a_L/23989.swc?url';
+import swcTrack2Url from '../game_data/geometry/object_track_LC10a_L/10148.swc?url';
+import swcTrack3Url from '../game_data/geometry/object_track_LC10a_L/11445.swc?url';
+import swcTrack4Url from '../game_data/geometry/object_track_LC10a_L/10090.swc?url';
+
+// The handoffs name some behaviors differently from the game's behavior runner and levels.json.
+const BEHAVIOR_ALIASES = { object_tracking: 'object_track' };
 
 // Branch game_turn_right test screen. Left: the DNa02_L and DNa02_R neurons, each with the motor neuron it
 // drives (anterior on the left). Right: the arena with the fly. Click a hotspot: light travels down its path,
@@ -370,7 +381,14 @@ async function boot() {
       handoff: handoffWing,
       reference: metaL.normalization,
     }),
+    await createNeuronPair({
+      urls: { glb: glbTrackUrl, swc: { 23989: swcTrack1Url, 10148: swcTrack2Url, 11445: swcTrack3Url, 10090: swcTrack4Url } },
+      meta: metaTrack,
+      handoff: handoffTrack,
+      reference: metaL.normalization,
+    }),
   ];
+  pairs.forEach((p) => (p.behaviorId = BEHAVIOR_ALIASES[p.behaviorId] ?? p.behaviorId));
   pairs.forEach((p) => brainPane.scene.add(p.group));
   frameBrain(pairs.map((p) => p.group));
   const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));

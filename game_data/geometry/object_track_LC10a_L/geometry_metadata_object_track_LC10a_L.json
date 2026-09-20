@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "object_track_LC10a_L.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [50976.0, 34496.0, 69280.0],
+    "scale": 0.00018242848803269119,
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "23989",
+      "name": "LC10a_L",
+      "role": "clickable_hotspot",
+      "glb_object_name": "23989",
+      "swc_file": "23989.swc",
+      "color_rgba": [0.05, 0.8, 0.2, 1.0],
+      "hotspot_center_game": [
+        3.9479349095,
+        -1.8653312901,
+        -7.5545461179
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "10148",
+      "name": "AOTU041_L",
+      "role": "intermediate",
+      "glb_object_name": "10148",
+      "swc_file": "10148.swc",
+      "color_rgba": [0.9, 0.05, 0.55, 1.0]
+    },
+    {
+      "body_id": "11445",
+      "name": "AOTU064_L",
+      "role": "intermediate",
+      "glb_object_name": "11445",
+      "swc_file": "11445.swc",
+      "color_rgba": [0.1, 0.45, 0.95, 1.0]
+    },
+    {
+      "body_id": "10090",
+      "name": "aSP22(DNa12)_L",
+      "role": "motor_output",
+      "glb_object_name": "10090",
+      "swc_file": "10090.swc",
+      "color_rgba": [0.95, 0.6, 0.05, 1.0]
+    }
+  ],
+  "connections": [
+    {
+      "source_body_id": "23989",
+      "target_body_id": "10148",
+      "weight": 65,
+      "primary_roi": "AOTU(L)",
+      "direction": "23989_to_10148"
+    },
+    {
+      "source_body_id": "10148",
+      "target_body_id": "11445",
+      "weight": 46,
+      "primary_roi": "CentralBrain",
+      "direction": "10148_to_11445"
+    },
+    {
+      "source_body_id": "11445",
+      "target_body_id": "10090",
+      "weight": 77,
+      "primary_roi": "CentralBrain",
+      "direction": "11445_to_10090"
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "object_track_LC10a_L",
+    "behavior_id": "object_tracking",
+    "representative_pathway": true,
+    "pulse_order": ["23989", "10148", "11445", "10090"],
+    "branch_level_pulse_source": "swc"
+  }
+}
