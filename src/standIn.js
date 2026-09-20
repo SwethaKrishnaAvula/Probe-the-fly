@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { makeMaterial, BASE_DIM, BASE_HOVER, TAIL } from './neuronPath.js';
+import { makeMaterial, BASE_DIM, BASE_HOVER, BASE_OFF, TAIL } from './neuronPath.js';
 import { rng } from './random.js';
 
 // STAND-IN hotspots. Some behaviors (walk forward, freeze, groom head, approach odor) have no neuron data yet, but the
@@ -40,7 +40,16 @@ export function createStandInHotspot({ hotspotId, behaviorId, position, seed, le
 
   let pulse = null;
   let hovered = false;
-  const setBase = () => (mat.uniforms.uBase.value = hovered && !pulse ? BASE_HOVER : BASE_DIM);
+  let live = true;
+  let hint = false;
+  let clock = 0;
+  const setBase = () => {
+    // Nothing here glows on its own: a placeholder wire is invisible until the cursor is over it (it then lights up),
+    // and it shows only while its pulse runs after a click. The hint flag is kept for the API but does not light it.
+    mat.uniforms.uBase.value = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
+    tube.visible = pulse !== null || (live && hovered);
+  };
+  setBase();
 
   return {
     group,
@@ -55,20 +64,35 @@ export function createStandInHotspot({ hotspotId, behaviorId, position, seed, le
       hovered = on;
       setBase();
     },
-    firePulse(onDone) {
+    setLive(on) {
+      live = on;
+      setBase();
+    },
+    setHint(on) {
+      hint = on;
+      setBase();
+    },
+    // A fizzle (a dead hotspot): the light dies out part-way along the tube.
+    firePulse(onDone, { fizzle = false } = {}) {
       if (pulse) return;
-      pulse = { t: 0, onDone };
+      pulse = { t: 0, onDone, fizzle };
       setBase();
     },
     update(dtMs) {
+      clock += dtMs;
+      if (hint && !pulse) setBase();
       if (!pulse) return;
       pulse.t += dtMs;
-      const p = Math.min(1, pulse.t / pulseMs);
-      mat.uniforms.uHead.value = p * (1 + TAIL * 3);
+      const dead = pulse.fizzle;
+      const runMs = dead ? pulseMs * 0.5 : pulseMs;
+      const p = Math.min(1, pulse.t / runMs);
+      mat.uniforms.uHead.value = p * (1 + TAIL * 3) * (dead ? 0.4 : 1);
+      mat.uniforms.uGlow.value = dead ? 1 - p : 1;
       if (p >= 1) {
         const done = pulse.onDone;
         pulse = null;
         mat.uniforms.uHead.value = -1;
+        mat.uniforms.uGlow.value = 1;
         setBase();
         done?.();
       }

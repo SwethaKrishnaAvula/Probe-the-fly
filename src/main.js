@@ -7,10 +7,10 @@ import { createKitchen as createArena } from './kitchen.js';
 import { createBehaviorRunner } from './behaviors.js';
 import { createNeuronPair, linkPairs } from './neuronPath.js';
 import { createStandInHotspot } from './standIn.js';
+import { createRules } from './rules.js';
 import { createHud } from './hud.js';
 import { createLookControls } from './lookControls.js';
 import { createCollisions } from './collisions.js';
-import { createBrainShell } from './brainShell.js';
 import { createIntro } from './intro.js';
 import { createTelemetry } from './telemetry.js';
 
@@ -345,53 +345,55 @@ function flushCaptures() {
   }
 }
 
-// Which level's world to show: ?level=1..5 (default 1).
-async function loadLevel() {
-  const data = await fetch('/data/levels.json').then((r) => r.json());
-  const levels = data.levels.filter((l) => l.type !== 'weak_spot');
-  const wanted = Number(new URLSearchParams(location.search).get('level')) || 1;
-  const index = Math.min(levels.length, Math.max(1, wanted)) - 1;
-  const level = levels[index];
+// Level data. ?level=1..5 picks the first level (default 1); the rules (rules.js) move on from there.
+let levelsData = [];
+let levelEntries = {};
+let rules = null;
 
+async function fetchLevels() {
+  const data = await fetch('/data/levels.json').then((r) => r.json());
+  levelsData = data.levels.filter((l) => l.type !== 'weak_spot');
+  levelEntries = data.hotspot_notebook_entries;
+  const wanted = Number(new URLSearchParams(location.search).get('level')) || 1;
+  return Math.min(levelsData.length, Math.max(1, wanted)) - 1;
+}
+
+// The world for a level: the kitchen, the fly back at its start, a fresh telemetry log. Nothing here needs the neurons.
+function prepareLevel(index) {
+  const level = levelsData[index];
+  runner.stop();
+  fly.resetPose();
   arena.configure(level.arena, level.id);
   fly.object.position.copy(arena.world.start);
-  fly.object.rotation.y = 0;
+  fly.object.rotation.set(0, 0, 0);
   goToView(overview(), true);
   if (playLanding) fly.object.visible = false; // it arrives through the window
-  hud.setLevel({ index, total: levels.length, level });
-  hud.setNotebookVisible(level.notebook_visible);
-  hud.setScore(0);
+  telemetry?.stop();
   telemetry = createTelemetry({ level, world: arena.world, getPos: () => fly.object.position });
-  let budget = level.click_budget;
-  hud.setClicks(budget, '0/' + level.hotspots.length);
-  // Level 1 unlocks "Start Task 1" after 5 probes; this screen has one hotspot, so it stays locked.
-  if (level.type === 'discovery') hud.setAction('Start Task 1', false, () => {});
-  const begin = () =>
-    hud.showIntro(level, () => {
-      hud.hideOverlay();
-      telemetry.ready();
-    });
+  return level;
+}
 
-  let probes = 0;
-  return {
-    begin,
-    entries: data.hotspot_notebook_entries,
-    // One click on the hotspot: spend a click (never below 0) and record it in the notebook.
-    onProbe(behaviorId) {
-      probes++;
-      if (budget != null) hud.setClicks((budget = Math.max(0, budget - 1)));
-      else hud.setClicks(null, `${Math.min(probes, 1)}/${level.hotspots.length}`);
-      if (level.notebook_visible) {
-        hud.recordProbe(behaviorId, data.hotspot_notebook_entries[behaviorId] ?? '', probes);
-        capture(brainPane, (url) => hud.setSnapshot(behaviorId, 'brain', url));
-        setTimeout(() => capture(arenaPane, (url) => hud.setSnapshot(behaviorId, 'arena', url)), 700);
-      }
-    },
-  };
+// Start (or restart) a level: set the world up, let the fly land, then the rules show the level card and play begins.
+let entering = false; // a level is being set up (the fly is landing): ignore a second request
+async function enterLevel(index) {
+  if (entering) return;
+  entering = true;
+  try {
+    collisions.enabled = false;
+    prepareLevel(index);
+    rules.setLevel(index);
+    if (playLanding) await landFly();
+    collisions.reset();
+    collisions.enabled = true;
+    rules.begin();
+  } finally {
+    entering = false;
+  }
 }
 
 async function boot() {
-  const game = await loadLevel();
+  const startIndex = await fetchLevels();
+  prepareLevel(startIndex);
   // The left pair defines the shared frame; the right pair is moved into it.
   const pairs = [
     await createNeuronPair({
@@ -466,26 +468,46 @@ async function boot() {
     createStandInHotspot({ hotspotId: 'standin_approach_odor', behaviorId: 'approach_odor', position: [-9.6, 2.0, 1.5], seed: 53 }),
   );
   pairs.forEach((p) => brainPane.scene.add(p.group));
-  const shell = createBrainShell(); // the glassy wire outline round the neurons (decoration only)
-  brainPane.scene.add(shell.group);
-  frameBrain([...pairs.map((p) => p.group), shell.group]); // the shell is part of what has to fit in view
+  frameBrain(pairs.map((p) => p.group));
   const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));
+  rules = createRules({
+    levels: levelsData,
+    entries: levelEntries,
+    arena,
+    fly,
+    runner,
+    hud,
+    pairs,
+    capture: (which, cb) => capture(which === 'brain' ? brainPane : arenaPane, cb),
+    getTelemetry: () => telemetry,
+    beforeMove: () => collisions.begin(),
+    onProbe: (behaviorId) => {
+      if (behaviorId === 'feed') beginFollow(); // feeding only: the camera glides in during the pulse and arrives as the behavior starts
+    },
+    enterLevel,
+  });
+
+  // The heading at the top goes back to the Discovery Lab and starts the run over.
+  const brand = document.getElementById('brand');
+  const goHome = () => {
+    if (!entering) rules?.restart();
+  };
+  brand.addEventListener('click', goHome);
+  brand.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goHome();
+    }
+  });
 
   createPicker({
     domElement: brainPane.domElement,
     camera: brainPane.camera,
-    getTargets: () => pairs.map((p) => p.hotspotMesh),
+    getTargets: () => pairs.filter((p) => rules.isLive(p)).map((p) => p.hotspotMesh), // only this level's hotspots
     onPick: (hotspotId) => {
       console.log('hotspot clicked:', hotspotId);
       const pair = pairById.get(hotspotId);
-      if (!pair || pairs.some((p) => p.busy) || runner.current) return; // one probe at a time
-      game.onProbe(pair.behaviorId);
-      telemetry?.probe(pair.behaviorId);
-      if (pair.behaviorId === 'feed') beginFollow(); // feeding only: the camera glides in during the pulse and arrives as the behavior starts
-      pair.firePulse(() => {
-        collisions.begin();
-        runner.start(pair.playBehavior ?? pair.behaviorId);
-      });
+      if (pair) rules.onPick(pair);
     },
     onHover: (hotspotId) => pairs.forEach((p) => p.setHover(p.hotspotId === hotspotId)),
   });
@@ -504,7 +526,12 @@ async function boot() {
       if (viewTween.t >= 1) viewTween = null;
     }
     pairs.forEach((p) => p.update(dt * 1000));
-    if (runner.update(dt * 1000)) telemetry?.behaviorEnded();
+    const ended = runner.update(dt * 1000);
+    if (ended) {
+      telemetry?.behaviorEnded();
+      rules.onBehaviorEnded(ended);
+    }
+    rules.update(dt * 1000);
     arena.update(dt * 1000);
     collisions.update();
     updateFollow(dt, pairs.some((p) => p.busy) || !!runner.current);
@@ -516,15 +543,12 @@ async function boot() {
   });
 
   if (new URLSearchParams(location.search).has('debug')) {
-    window.__dev = { THREE, arena, pairs, shell, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
+    window.__dev = { THREE, arena, rules, pairs, fly, runner, collisions, goToView, eyeView, arenaControls, arenaPane, brainPane, camera: brainPane.camera, canvas: brainPane.domElement };
   }
   // Start of the level: wait for the opening video (level 1), fly the fly in and land it, then show the level card.
   await introDone;
   if (intro) intro.hide();
-  if (playLanding) await landFly();
-  collisions.reset();
-  collisions.enabled = true;
-  game.begin();
+  await enterLevel(startIndex);
 }
 
 boot();

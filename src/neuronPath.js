@@ -8,7 +8,10 @@ import { parseSwc, toGlbFrame, buildGrid, nearest, geodesicFrom, vertexProgress,
 // motor neuron, using the handoff's math_outputs.pulse_timing.
 
 export const BASE_DIM = 0.4; // resting brightness of a neuron (0..1)
-export const BASE_HOVER = 0.7; // hotspot neuron brightness while hovered
+export const BASE_HOVER = 0.7;
+// A circuit outside the current level keeps its normal look (green, pink, blue, orange), never near-black; only clicking
+// is gated. (It was 0.1, which drew those neurons as black lines.)
+export const BASE_OFF = BASE_DIM;
 export const TAIL = 0.18; // length of the glowing trail behind the head, as a fraction of the neuron
 const PULSE_TIME_SCALE = 1; // 1 = exactly the milliseconds in the handoff json
 
@@ -159,7 +162,19 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
       m.polygonOffsetFactor = on ? -2 : 0;
       m.polygonOffsetUnits = on ? -2 : 0;
     });
-  const setBase = () => (hotspotMat.uniforms.uBase.value = hovered && !pulse ? BASE_HOVER : BASE_DIM);
+  // Resting brightness. A circuit outside the current level is nearly invisible. Nothing glows on its own: hover
+  // brightens a hotspot, and only a click sends the spark along it.
+  let live = true;
+  let hint = false;
+  let clock = 0;
+  const restMats = ids.slice(1).map((id) => byId[id].material);
+  const setBase = () => {
+    restMats.forEach((m) => (m.uniforms.uBase.value = live ? BASE_DIM : BASE_OFF));
+    let base = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
+    // (no idle glow: a hotspot lights up only when hovered, and sparks only when clicked; the level hint no longer pulses it)
+    hotspotMat.uniforms.uBase.value = base;
+  };
+  setBase();
 
   return {
     group,
@@ -175,25 +190,42 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
       setBase();
     },
 
-    // Send the light down the path. onDone runs when it has reached the end of the last neuron.
-    firePulse(onDone) {
+    // Is this circuit part of the current level? Not live: dim, and the game will not offer it for clicking.
+    setLive(on) {
+      live = on;
+      setBase();
+    },
+
+    // The level's first_click_hint: the hotspot neuron glows gently until the player clicks something.
+    setHint(on) {
+      hint = on;
+      setBase();
+    },
+
+    // Send the light down the path. onDone runs when it has reached the end of the last neuron. A fizzle (a dead
+    // hotspot) lights only the first neuron, dies out part-way along it, and never reaches the rest.
+    firePulse(onDone, { fizzle = false } = {}) {
       if (pulse) return;
-      pulse = { t: 0, onDone };
+      pulse = { t: 0, onDone, fizzle };
       setInFront(true);
       setBase();
     },
 
     update(dtMs) {
+      clock += dtMs;
+      if (hint && !pulse) setBase();
       if (!pulse) return;
       pulse.t += dtMs;
-      timing.forEach((s) => {
+      const dead = pulse.fizzle;
+      const runMs = dead ? timing[0].end : totalMs;
+      timing.forEach((s, i) => {
         const m = byId[s.id].material.uniforms;
-        if (pulse.t < s.start) return void (m.uHead.value = -1);
+        if ((dead && i > 0) || pulse.t < s.start) return void (m.uHead.value = -1);
         const p = Math.min(1, (pulse.t - s.start) / (s.end - s.start));
-        m.uHead.value = p * (1 + TAIL * 3); // run past the end so the band fully leaves the neuron
-        m.uGlow.value = s.glow;
+        m.uHead.value = p * (1 + TAIL * 3) * (dead ? 0.4 : 1); // run past the end so the band fully leaves the neuron
+        m.uGlow.value = dead ? s.glow * (1 - p) : s.glow;
       });
-      if (pulse.t >= totalMs) {
+      if (pulse.t >= runMs) {
         const done = pulse.onDone;
         pulse = null;
         timing.forEach((s) => (byId[s.id].material.uniforms.uHead.value = -1));
@@ -225,9 +257,15 @@ export function linkPairs(primary, secondary, { hotspotId, behaviorId, playBehav
     setHover(on) {
       parts.forEach((p) => p.setHover(on)); // both copies of the shared neuron, so they never differ in brightness
     },
-    firePulse(onDone) {
+    setLive(on) {
+      parts.forEach((p) => p.setLive(on));
+    },
+    setHint(on) {
+      parts.forEach((p) => p.setHint(on));
+    },
+    firePulse(onDone, opts) {
       let left = parts.length;
-      parts.forEach((p) => p.firePulse(() => --left === 0 && onDone?.()));
+      parts.forEach((p) => p.firePulse(() => --left === 0 && onDone?.(), opts));
     },
     update(dtMs) {
       parts.forEach((p) => p.update(dtMs));
