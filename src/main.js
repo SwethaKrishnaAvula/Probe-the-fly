@@ -509,7 +509,7 @@ async function boot() {
   createPicker({
     domElement: brainPane.domElement,
     camera: brainPane.camera,
-    getTargets: () => pairs.filter((p) => rules.isLive(p)).map((p) => p.hotspotMesh), // only this level's hotspots
+    getTargets: () => pairs.map((p) => p.hotspotMesh), // every hotspot lights up on hover; rules.onPick only takes clicks on this level's own
     onPick: (hotspotId) => {
       console.log('hotspot clicked:', hotspotId);
       const pair = pairById.get(hotspotId);

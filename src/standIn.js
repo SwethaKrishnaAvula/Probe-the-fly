@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { makeMaterial, BASE_DIM, BASE_HOVER, BASE_OFF, TAIL } from './neuronPath.js';
+import { makeMaterial, BASE_DIM, BASE_OFF, TAIL, HIT_RADIUS } from './neuronPath.js';
+import { createHalo } from './halo.js';
 import { rng } from './random.js';
 
 // STAND-IN hotspots. Some behaviors (walk forward, freeze, groom head, approach odor) have no neuron data yet, but the
@@ -9,7 +10,6 @@ import { rng } from './random.js';
 // the same schema and swap later"). The honesty statement "neuron shapes are real" applies only to the real ones.
 
 const STAND_IN_COLOR = [0.7, 0.6, 0.95, 1]; // lavender: unmistakably not one of the green/pink/blue/orange real neurons
-const HIT_RADIUS = 0.5;
 const TUBE_R = 0.03;
 
 // position: where the click target (the neuron's start) sits, in the brain view's world coordinates.
@@ -38,19 +38,23 @@ export function createStandInHotspot({ hotspotId, behaviorId, position, seed, le
   hotspot.userData.hotspotId = hotspotId;
   group.add(hotspot);
 
+  // The glow that shows the placeholder is there when the cursor is over it (its wire is otherwise hidden).
+  const halo = createHalo(STAND_IN_COLOR, 1);
+  group.add(halo.sprite);
+
   let pulse = null;
   let hovered = false;
   let live = true;
   let hint = false;
   let clock = 0;
   const setBase = () => {
-    // A placeholder wire is invisible until the cursor is over it (it then lights up), and it shows while its pulse runs
-    // after a click. The one exception is the level's first_click_hint: the wire appears and glows gently until the
-    // player clicks something.
-    let base = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
+    // A placeholder wire stays hidden: hovering shows only the glowing circle (halo.js), and the wire appears only while
+    // its pulse runs after a click. The one exception is the level's first_click_hint: the wire appears and glows
+    // gently until the player clicks something.
+    let base = !live ? BASE_OFF : BASE_DIM;
     if (live && hint && !pulse) base = BASE_DIM + 0.35 * (0.5 + 0.5 * Math.sin(clock * 0.006));
     mat.uniforms.uBase.value = base;
-    tube.visible = pulse !== null || (live && (hovered || hint));
+    tube.visible = pulse !== null || (live && hint);
   };
   setBase();
 
@@ -84,6 +88,7 @@ export function createStandInHotspot({ hotspotId, behaviorId, position, seed, le
     update(dtMs) {
       clock += dtMs;
       if (hint && !pulse) setBase();
+      halo.update(pulse ? 0.45 : hovered ? 1 : live && hint ? 0.3 + 0.4 * (0.5 + 0.5 * Math.sin(clock * 0.006)) : 0, dtMs);
       if (!pulse) return;
       pulse.t += dtMs;
       const dead = pulse.fizzle;

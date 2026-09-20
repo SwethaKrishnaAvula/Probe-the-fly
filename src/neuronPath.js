@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { createHalo } from './halo.js';
 import { parseSwc, toGlbFrame, buildGrid, nearest, geodesicFrom, vertexProgress, rootIndex } from './skeletonMap.js';
 
 // The clickable DNa02_L neuron and the motor neuron it drives, from the .glb tube meshes.
@@ -8,11 +9,14 @@ import { parseSwc, toGlbFrame, buildGrid, nearest, geodesicFrom, vertexProgress,
 // motor neuron, using the handoff's math_outputs.pulse_timing.
 
 export const BASE_DIM = 0.4; // resting brightness of a neuron (0..1)
-export const BASE_HOVER = 0.7;
+export const BASE_HOVER = 1.35; // (not used for hover any more: a hover shows only the halo)
 // A circuit outside the current level keeps its normal look (green, pink, blue, orange), never near-black; only clicking
 // is gated. (It was 0.1, which drew those neurons as black lines.)
 export const BASE_OFF = BASE_DIM;
 export const TAIL = 0.18; // length of the glowing trail behind the head, as a fraction of the neuron
+// Hover and click area around a hotspot (scene units). The metadata suggests 0.5; that was too small to find on a thin
+// neuron, so every hotspot uses this instead.
+export const HIT_RADIUS = 0.8;
 const PULSE_TIME_SCALE = 1; // 1 = exactly the milliseconds in the handoff json
 
 const vertexShader = /* glsl */ `
@@ -133,12 +137,17 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
   const hs = byId[ids[0]].info;
   const [hx, hy, hz] = hs.hotspot_center_game;
   const hotspot = new THREE.Mesh(
-    new THREE.SphereGeometry(hs.suggested_hit_radius / fit, 16, 12), // /fit: exactly 0.5 in the shared frame
+    new THREE.SphereGeometry(HIT_RADIUS / fit, 16, 12), // /fit: the same size in the shared frame for every pair
     new THREE.MeshBasicMaterial({ visible: false }),
   );
   hotspot.position.set(hx, hz, -hy);
   hotspot.userData.hotspotId = meta.game_mapping.hotspot_id;
   inner.add(hotspot);
+
+  // The glow that shows a hotspot is there when the cursor is over it (and pulses with the level's hint).
+  const halo = createHalo(hs.color_rgba, fit);
+  halo.sprite.position.copy(hotspot.position);
+  inner.add(halo.sprite);
 
   // Pulse schedule from the handoff.
   const timing = handoff.math_outputs.pulse_timing.map((t) => ({
@@ -162,7 +171,7 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
       m.polygonOffsetFactor = on ? -2 : 0;
       m.polygonOffsetUnits = on ? -2 : 0;
     });
-  // Resting brightness. A circuit outside the current level is nearly invisible. Hover brightens a hotspot, and a
+  // Resting brightness. A circuit outside the current level is nearly invisible. Hover shows only a circle, and a
   // click sends the spark along it. The one thing that glows on its own is the level's first_click_hint, until the
   // player clicks something.
   let live = true;
@@ -171,7 +180,8 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
   const restMats = ids.slice(1).map((id) => byId[id].material);
   const setBase = () => {
     restMats.forEach((m) => (m.uniforms.uBase.value = live ? BASE_DIM : BASE_OFF));
-    let base = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
+    // Hovering shows only the glowing circle (halo.js), for any hotspot, live or not: the neurons stay at rest until clicked.
+    let base = !live ? BASE_OFF : BASE_DIM;
     if (live && hint && !pulse) base = BASE_DIM + 0.35 * (0.5 + 0.5 * Math.sin(clock * 0.006)); // a gentle, slow pulse
     hotspotMat.uniforms.uBase.value = base;
   };
@@ -215,6 +225,7 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
     update(dtMs) {
       clock += dtMs;
       if (hint && !pulse) setBase();
+      halo.update(pulse ? 0.45 : hovered ? 1 : live && hint ? 0.3 + 0.4 * (0.5 + 0.5 * Math.sin(clock * 0.006)) : 0, dtMs);
       if (!pulse) return;
       pulse.t += dtMs;
       const dead = pulse.fizzle;
