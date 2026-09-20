@@ -67,20 +67,6 @@ Pathways currently represented in the repository include turning, feeding, objec
 
 The pipeline follows a literature-first workflow: choose a documented behavior, locate the relevant neuron type, inspect its real downstream connectivity, review candidate paths, and only then export a pathway for the game.
 
-### Setup
-
-You will need Python 3.10 or newer and access to [neuPrint](https://neuprint.janelia.org/).
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-export NEUPRINT_APPLICATION_CREDENTIALS="your-neuprint-token"
-python scripts/01_check_access.py
-```
-
-Keep your neuPrint token private. The `.env` file is ignored by Git, and credentials should never be committed.
-
 ### Pipeline stages
 
 ```text
@@ -93,13 +79,7 @@ Keep your neuPrint token private. The `.env` file is ignored by Git, and credent
 blender_swc_to_glb.py     convert SWC skeletons into a GLB model in Blender
 ```
 
-For example, the first analysis step can be run with:
-
-```bash
-python scripts/02_find_neurons.py --type DNa02
-```
-
-Run any script with `--help` to see its current options. Candidate pathways must still be reviewed against neuron annotations, anatomy, and published research; the highest-scoring route is not automatically the most biologically meaningful one.
+Candidate pathways are reviewed against neuron annotations, anatomy, and published research; the highest-scoring route is not automatically the most biologically meaningful one.
 
 ## Gameplay and controls
 
