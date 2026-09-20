@@ -9,6 +9,7 @@ Run:  python -m uvicorn server.app:app --port 8000        (vite proxies /api her
 The game keeps working if this is down: the browser just queues and retries.
 """
 
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -20,6 +21,7 @@ from . import db
 from .weak_spot import compute_weak_spots
 
 app = FastAPI(title="Probe the fly")
+log = logging.getLogger("uvicorn.error")
 
 
 class ProbeEvent(BaseModel):
@@ -45,6 +47,7 @@ def _db_call(fn, *args):
     except RuntimeError as e:  # missing config / schema
         raise HTTPException(503, str(e))
     except Exception as e:  # connection or SQL failure
+        log.error("database error: %s: %s", type(e).__name__, str(e).strip()[:300])  # the reason, in the API's terminal
         raise HTTPException(502, f"database error: {type(e).__name__}")
 
 

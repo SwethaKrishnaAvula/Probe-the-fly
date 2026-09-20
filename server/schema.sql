@@ -15,6 +15,13 @@ CREATE TABLE IF NOT EXISTS probe_events (
   mistake          TEXT                              -- NULL, or bonk:cheese, soaked:sink, wrong_hotspot,
 );                                                   -- dead_hotspot, half_hearted_song, missed_pie, moved_away
 
+-- If probe_events already existed with fewer columns (the service was set up earlier), the CREATE above skipped it:
+-- these add whatever is missing and change nothing else.
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS session_id  UUID;
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS level_id    TEXT;
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS behavior_id TEXT;
+ALTER TABLE probe_events ADD COLUMN IF NOT EXISTS mistake     TEXT;
+
 SELECT create_hypertable('probe_events', 'time', if_not_exists => TRUE);
 CREATE INDEX IF NOT EXISTS probe_events_player_time ON probe_events (player_id, time DESC);
 
