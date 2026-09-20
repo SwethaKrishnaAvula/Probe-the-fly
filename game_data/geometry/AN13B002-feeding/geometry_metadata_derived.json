@@ -1,7 +1,7 @@
 {
   "version": 1,
   "derived": true,
-  "derived_note": "Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node of the hotspot neuron. Replace with the real file.",
+  "derived_note": "Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node in the brain-most tenth of the hotspot neuron. Replace with the real file.",
   "dataset": "male-cns:v1.0",
   "geometry_type": "tube_mesh_from_swc",
   "glb_file": "feed_AN13B002_R.glb",
@@ -31,9 +31,9 @@
         1
       ],
       "hotspot_center_game": [
-        -1.3463751438434983,
-        0.09544016110471859,
-        7.704077963176065
+        -0.36823935558112775,
+        -0.6386651323360184,
+        -8.745684695051784
       ],
       "suggested_hit_radius": 0.5
     },

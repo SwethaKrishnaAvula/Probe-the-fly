@@ -3,7 +3,9 @@
 // Every geometry_metadata.json we have (DNa02_L, DNa02_R, escape_jump_L) uses "shared_center_and_scale":
 // center = middle of the bounding box of all the circuit's skeleton nodes, scale = 20 / longest side.
 // That rule reproduces those three files exactly (0 error), so it is used here for the circuits without one.
-// The click point follows the DNa02_L file: its hotspot_center_game is the widest node (the cell body).
+// The click point follows the DNa02_L file (the cell body), but restricted to the brain end of the neuron: every
+// hotspot must sit in the brain, and an ascending neuron (e.g. AN13B002) has its cell body in the nerve cord.
+// Brain end = smaller native z (checked: descending-neuron cell bodies in three circuits all sit there).
 // The output is marked "derived": true. Replace it with the real file when it arrives.
 //
 // usage: node scripts/derive_geometry_metadata.mjs <geometry folder> <filled handoff json> <glb file name> <out file>
@@ -49,16 +51,21 @@ for (const rows of Object.values(swcs)) {
 const center = lo.map((v, a) => (v + hi[a]) / 2);
 const scale = TARGET / Math.max(...hi.map((v, a) => v - lo[a]));
 
-// Widest node of the hotspot neuron, in the metadata's own (pre-export) axis order: (native - center) * scale.
+// Widest node within the brain-most BRAIN_END_FRACTION of the hotspot neuron's length, in the metadata's own
+// (pre-export) axis order: (native - center) * scale. For a descending neuron this is its cell body.
+const BRAIN_END_FRACTION = 0.1;
 const hotspotRows = swcs[ids[0]];
-const soma = hotspotRows.reduce((best, r) => (r[5] > best[5] ? r : best));
+const zLo = Math.min(...hotspotRows.map((r) => r[4]));
+const zHi = Math.max(...hotspotRows.map((r) => r[4]));
+const brainEnd = hotspotRows.filter((r) => r[4] <= zLo + BRAIN_END_FRACTION * (zHi - zLo));
+const soma = brainEnd.reduce((best, r) => (r[5] > best[5] ? r : best));
 const hotspotCenter = [0, 1, 2].map((a) => (soma[2 + a] - center[a]) * scale);
 
 const meta = {
   version: 1,
   derived: true,
   derived_note:
-    'Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node of the hotspot neuron. Replace with the real file.',
+    'Not provided by the geometry team. Normalization recomputed from the SWC files with the same rule that reproduces the existing metadata files; hotspot_center_game is the widest node in the brain-most tenth of the hotspot neuron. Replace with the real file.',
   dataset: handoff.dataset,
   geometry_type: 'tube_mesh_from_swc',
   glb_file: glbFile,
