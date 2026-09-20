@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "feed_AN13B002_R.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": [53632.0, 43424.0, 73024.0],
+    "scale": 0.00017980437284234753,
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "21763",
+      "name": "AN13B002_R",
+      "role": "clickable_hotspot",
+      "glb_object_name": "21763",
+      "swc_file": "21763.swc",
+      "color_rgba": [0.05, 0.8, 0.2, 1.0],
+      "hotspot_center_game": [
+        -1.3327100115,
+        0.0965549482,
+        7.6832206559
+      ],
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "15758",
+      "name": "AN05B099_R",
+      "role": "intermediate",
+      "glb_object_name": "15758",
+      "swc_file": "15758.swc",
+      "color_rgba": [0.9, 0.05, 0.55, 1.0]
+    },
+    {
+      "body_id": "11063",
+      "name": "DNge032_L",
+      "role": "intermediate",
+      "glb_object_name": "11063",
+      "swc_file": "11063.swc",
+      "color_rgba": [0.1, 0.45, 0.95, 1.0]
+    },
+    {
+      "body_id": "16827",
+      "name": "MN8_L",
+      "role": "motor_output",
+      "glb_object_name": "16827",
+      "swc_file": "16827.swc",
+      "color_rgba": [0.95, 0.6, 0.05, 1.0]
+    }
+  ],
+  "connections": [
+    {
+      "source_body_id": "21763",
+      "target_body_id": "15758",
+      "weight": 70,
+      "primary_roi": "VNC",
+      "direction": "21763_to_15758"
+    },
+    {
+      "source_body_id": "15758",
+      "target_body_id": "11063",
+      "weight": 43,
+      "primary_roi": "CentralBrain",
+      "direction": "15758_to_11063"
+    },
+    {
+      "source_body_id": "11063",
+      "target_body_id": "16827",
+      "weight": 29,
+      "primary_roi": "GNG",
+      "direction": "11063_to_16827"
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "feed_AN13B002_R",
+    "behavior_id": "feed",
+    "representative_pathway": true,
+    "pulse_order": ["21763", "15758", "11063", "16827"],
+    "branch_level_pulse_source": "swc"
+  }
+}
