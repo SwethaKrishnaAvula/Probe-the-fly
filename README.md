@@ -4,7 +4,7 @@
 
 Probe the Fly turns neuroscience data into a playable puzzle. Players explore a 3D fly brain, probe neuron hotspots, follow signals through connected cells, and discover how neural circuits relate to behavior.
 
-**Project status:** Work in progress. The neuPrint data pipeline and several verified neural pathways are currently in the repository. The full game, final visuals, and complete gameplay instructions are still under development.
+**Project status:** Playable prototype. The game client (Three.js and Vite) runs five levels on eleven hotspots, with the neuPrint data pipeline behind them. Some hotspots are still placeholders and some data is derived rather than supplied; both are listed openly in [Known placeholders and limits](#known-placeholders-and-limits).
 
 ## Table of contents
 
@@ -13,8 +13,12 @@ Probe the Fly turns neuroscience data into a playable puzzle. Players explore a 
 - [What is real - and what is simplified?](#what-is-real---and-what-is-simplified)
 - [Current repository](#current-repository)
 - [Data pipeline](#data-pipeline)
+- [Play it locally](#play-it-locally)
 - [Gameplay and controls](#gameplay-and-controls)
-- [Planned technology](#planned-technology)
+- [The hotspots and their evidence](#the-hotspots-and-their-evidence)
+- [Honesty statements](#honesty-statements)
+- [Known placeholders and limits](#known-placeholders-and-limits)
+- [Technology](#technology)
 - [Scientific note](#scientific-note)
 - [Contributing](#contributing)
 - [Contact](#contact)
@@ -54,14 +58,17 @@ The planned experience combines:
 The current branch focuses on preparing trustworthy neural data for the game:
 
 ```text
-scripts/                 neuPrint queries, path building, and export tools
+src/                     the game client (Three.js): rules, hotspots, fly, kitchen, sound
+public/data/levels.json  the five levels and the notebook text
+scripts/                 neuPrint queries, path building, export tools, data sync
 data/results/            intermediate analysis and candidate pathways
 data/handoffs/           reviewed pathway packages for game development
-game_data/geometry/      SWC skeletons and GLB neuron models
-levels.json              early level data
+game_data/geometry/      SWC skeletons, GLB neuron models and their metadata
+path_jsons/math_filled/  each pathway with its pulse timing and brightness filled in
+server/                  the optional Python API for probe events and the memory layer
 ```
 
-Pathways currently represented in the repository include turning, feeding, object tracking, courtship song, and escape responses. These are still being integrated into the final game.
+Pathways in the game today: turning (left and right), feeding, object tracking, courtship song, and the escape response (left and right).
 
 ## Data pipeline
 
@@ -81,17 +88,74 @@ blender_swc_to_glb.py     convert SWC skeletons into a GLB model in Blender
 
 Candidate pathways are reviewed against neuron annotations, anatomy, and published research; the highest-scoring route is not automatically the most biologically meaningful one.
 
+## Play it locally
+
+You need Node.js. From the project folder:
+
+```text
+npm install
+npm run dev          # serves the game at http://localhost:5173
+```
+
+The game works on its own: it never depends on the API. The optional backend (probe events and the memory layer) is `npm run api`, which needs the Python packages in `server/requirements.txt` and a database connection; without it the game plays normally and quietly keeps its event log.
+
+Useful web addresses while developing: `?level=1` to `?level=5` starts at that level, `?intro=0` skips the opening video and the fly-in, and `?debug` exposes internals for testing.
+
 ## Gameplay and controls
 
-The complete gameplay loop, controls, screenshots, and installation instructions will be added as the game client is finalized.
+You are looking at a real fly nervous system on the left and a fly in a kitchen on the right. There are no movement buttons: the brain is the only controller.
 
-The current design centers on probing a neural hotspot, watching its signal travel through the 3D pathway, observing the fly's response, and remembering the circuit well enough to solve later challenges.
+- **Hover a hotspot** on the brain and a glowing circle shows where it is. Nothing else lights up.
+- **Click it** and a spark travels along the real neurons of that pathway; when it arrives, the fly acts.
+- **Left screen:** drag to turn the brain, scroll or pinch to zoom. **Right screen:** drag to look around, scroll or pinch to move, or use the arrow buttons; *Recenter* returns to the opening view and *Fly view* looks through the fly's eyes.
+- **Field notebook:** in the discovery level every probe is recorded with a snapshot and a line of text; in the task levels it is hidden and you work from memory.
+- Sound follows the fly: one sound while it is in the air, another for everything else, over a quiet music track (with an on/off button).
 
-## Planned technology
+The five levels:
+
+1. **Discovery lab** - probe freely; at least five different hotspots unlock the first task. Not scored.
+2. **Reach the pie** - fly to the pie and feed, within a click budget and without the notebook.
+3. **Pie plus shadow** - the same, while a shadow sweeps the counter; freezing in time keeps the fly safe.
+4. **Lesion** - one hotspot is dead; find another route that does the same job.
+5. **Threshold** - build the case with two cues, then sing within the window.
+
+The game is designed to remember what you forget: each probe is logged with an anonymous player ID and no personal data, so that challenges can be built around your weakest hotspots.
+
+## The hotspots and their evidence
+
+Each hotspot's shape and wiring are real (`male-cns:v1.0`); the link from a circuit to a behavior comes from the literature cited here, as recorded in the reviewed handoff files in `path_jsons/math_filled/`. Weights are neuPrint synapse counts along each hop.
+
+| Hotspot | Behavior in the game | Real pathway (cell types) | Synapse weights | Evidence |
+| --- | --- | --- | --- | --- |
+| Turn left / turn right | Airborne turn, 90 degrees | DNa02 to sternal anterior rotator motor neuron (one per side) | 106 (L), 134 (R) | Berg et al. 2026, *Sexual dimorphism in the complete connectome of the Drosophila male central nervous system*. DNa02 is literature-associated with steering; the direct motor path is supported by the connectivity. |
+| Feeding | Proboscis extension | AN13B002 to AN05B099 to DNge032 to MN8 (proboscis motor neuron) | 70, 43, 29 | Tastekin et al., *The Comprehensive Drosophila Taste-Feeding Connectome*, doi:10.1101/2025.08.25.671814. A representative pathway, not presented as the complete bilateral feeding circuit. |
+| Wing song | One wing extends and vibrates | pIP10 to TN1a_i to hg1 motor neuron | 171, 43 | von Philipsborn et al. 2011, *Neuronal Control of Drosophila Courtship Song*, Neuron 69(3):509-522; Shirangi, Wong, Truman and Stern 2016, Dev Cell 37(6):533-544; Shirangi, Stern and Truman 2013, Cell Reports 5:678-686. Every node and link is independently confirmed in prior literature. One open question is flagged: the premotor neuron dPR1 connects to hg1 more strongly than TN1a does. |
+| Object tracking | Pursue: turn toward the target, then fly forward | LC10a to AOTU041 to AOTU064 to aSP22 | 65, 46, 77 | bioRxiv 2025.10.09.680999v2: LC10a supports courtship tracking; aSP22/DNa12 is associated with pursuit steering. The end roles are supported by the literature; the exact route between them is a connectome-derived candidate. |
+| Escape (left and right) | Jump, then a sustained flight | The giant fiber DNp01 drives two paths at once: to the tergotrochanteral motor neuron (jump), and through PSI to a DLM motor neuron (flight) | jump 20 (L), 70 (R); flight 9 then 67 (L), 3 then 67 (R) | Classic giant fiber literature; **the exact citation is still pending biology review.** The connections are verified in `male-cns:v1.0`. One DLM motor neuron stands in for several. |
+
+## Honesty statements
+
+- **Real:** neuron shapes and wiring come from the male fruit fly central nervous system connectome.
+- **From research, not from the connectome alone:** which hotspot causes which behavior comes from the published papers above. A connectome shows wiring, not function.
+- **Our own simple model:** how the spark spreads is game-authored (fixed timing per synaptic hop, brightness scaled from connection weights). It is not a validated simulation of a living fly's activity.
+- **Hand-authored:** the last step from a motor neuron to the fly's animation is drawn by hand.
+- **Small numbers:** player statistics come from few players and are for gameplay, not science.
+- **No language model:** the game contains no language model, in the client or the API.
+
+## Known placeholders and limits
+
+- **Four hotspots are stand-ins, not real neurons:** walk forward, freeze, groom head and approach odor have no circuit data yet. Each is an invented wire, drawn only while its spark plays, and the levels need them to be playable. Each will be replaced when its real pathway is reviewed and exported.
+- **Some geometry metadata is derived:** where a pathway's own metadata file was missing or incomplete (feeding, wing song, the escape circuit), `scripts/derive_geometry_metadata.mjs` recomputes the scale and centre from the SWC files (the same rule reproduces the supplied files exactly) and chooses the click point. The click point is ours, not a measurement.
+- **The feeding hotspot's placement:** AN13B002 is an ascending neuron whose cell body lies in the nerve cord. The hotspot is placed at its brain end so that every hotspot sits in the brain.
+- **Representative pathways:** each pathway is a short representative route, not the full biological circuit.
+- **Left and right on screen:** the left and right hotspots are named after the neuron's annotated side; the display's left-right handedness has not been independently checked against the dataset's orientation.
+- **Provisional numbers:** scoring and click budgets are provisional until the scoring file is finalized.
+
+## Technology
 
 - **Data and analysis:** Python, pandas, neuPrint, Neuroglancer
 - **3D assets:** SWC neuron skeletons, Blender, GLB/glTF
-- **Game client:** Three.js and Vite
+- **Game client:** Three.js and Vite (plain JavaScript, no physics engine, no language model)
 - **Adaptive memory:** Tiger Data / PostgreSQL time-series events
 
 ## Scientific note
