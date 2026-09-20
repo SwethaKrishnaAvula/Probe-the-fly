@@ -44,10 +44,13 @@ export function createStandInHotspot({ hotspotId, behaviorId, position, seed, le
   let hint = false;
   let clock = 0;
   const setBase = () => {
-    // Nothing here glows on its own: a placeholder wire is invisible until the cursor is over it (it then lights up),
-    // and it shows only while its pulse runs after a click. The hint flag is kept for the API but does not light it.
-    mat.uniforms.uBase.value = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
-    tube.visible = pulse !== null || (live && hovered);
+    // A placeholder wire is invisible until the cursor is over it (it then lights up), and it shows while its pulse runs
+    // after a click. The one exception is the level's first_click_hint: the wire appears and glows gently until the
+    // player clicks something.
+    let base = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
+    if (live && hint && !pulse) base = BASE_DIM + 0.35 * (0.5 + 0.5 * Math.sin(clock * 0.006));
+    mat.uniforms.uBase.value = base;
+    tube.visible = pulse !== null || (live && (hovered || hint));
   };
   setBase();
 

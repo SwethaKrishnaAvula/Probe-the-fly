@@ -162,8 +162,9 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
       m.polygonOffsetFactor = on ? -2 : 0;
       m.polygonOffsetUnits = on ? -2 : 0;
     });
-  // Resting brightness. A circuit outside the current level is nearly invisible. Nothing glows on its own: hover
-  // brightens a hotspot, and only a click sends the spark along it.
+  // Resting brightness. A circuit outside the current level is nearly invisible. Hover brightens a hotspot, and a
+  // click sends the spark along it. The one thing that glows on its own is the level's first_click_hint, until the
+  // player clicks something.
   let live = true;
   let hint = false;
   let clock = 0;
@@ -171,7 +172,7 @@ export async function createNeuronPair({ urls, meta, handoff, reference = null }
   const setBase = () => {
     restMats.forEach((m) => (m.uniforms.uBase.value = live ? BASE_DIM : BASE_OFF));
     let base = !live ? BASE_OFF : hovered && !pulse ? BASE_HOVER : BASE_DIM;
-    // (no idle glow: a hotspot lights up only when hovered, and sparks only when clicked; the level hint no longer pulses it)
+    if (live && hint && !pulse) base = BASE_DIM + 0.35 * (0.5 + 0.5 * Math.sin(clock * 0.006)); // a gentle, slow pulse
     hotspotMat.uniforms.uBase.value = base;
   };
   setBase();
