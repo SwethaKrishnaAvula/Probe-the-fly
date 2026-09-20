@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "dataset": "male-cns:v1.0",
+  "geometry_type": "tube_mesh_from_swc",
+  "glb_file": "wing_song_pIP10_R.glb",
+  "source_coordinate_unit_nm": 8,
+  "normalization": {
+    "method": "shared_center_and_scale",
+    "center_native": "TODO_NEEDS_REAL_VALUE",
+    "scale": "TODO_NEEDS_REAL_VALUE",
+    "target_largest_dimension": 20.0,
+    "rotation_applied": false
+  },
+  "neurons": [
+    {
+      "body_id": "11116",
+      "name": "pIP10_R",
+      "role": "clickable_hotspot",
+      "glb_object_name": "11116",
+      "swc_file": "11116.swc",
+      "color_rgba": [0.05, 0.8, 0.2, 1.0],
+      "hotspot_center_game": "TODO_NEEDS_REAL_VALUE",
+      "suggested_hit_radius": 0.5
+    },
+    {
+      "body_id": "804090",
+      "name": "TN1a_i_L",
+      "role": "premotor_relay",
+      "glb_object_name": "804090",
+      "swc_file": "804090.swc",
+      "color_rgba": [0.9, 0.05, 0.55, 1.0]
+    },
+    {
+      "body_id": "800917",
+      "name": "hg1 MN_R",
+      "role": "motor_output",
+      "glb_object_name": "800917",
+      "swc_file": "800917.swc",
+      "color_rgba": [0.10, 0.45, 0.95, 1.0]
+    }
+  ],
+  "connections": [
+    {
+      "source_body_id": "11116",
+      "target_body_id": "804090",
+      "weight": 102,
+      "roi": "LTct",
+      "direction": "11116_to_804090"
+    },
+    {
+      "source_body_id": "804090",
+      "target_body_id": "800917",
+      "weight": 36,
+      "roi": "WTct(UTct-T2)(R)",
+      "direction": "804090_to_800917"
+    }
+  ],
+  "game_mapping": {
+    "hotspot_id": "hs_pIP10_R",
+    "behavior_id": "wing_song",
+    "pulse_order": ["11116", "804090", "800917"],
+    "branch_level_pulse_source": "swc"
+  }
+}
