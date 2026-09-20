@@ -22,6 +22,15 @@ import handoffR from '../path_jsons/math_filled/DNa02_R_handoff.json';
 import glbRUrl from '../game_data/geometry/DNa02_R_projection/DNa02_R_10360_801946.glb?url';
 import swcR1Url from '../game_data/geometry/DNa02_R_projection/10360.swc?url';
 import swcR2Url from '../game_data/geometry/DNa02_R_projection/801946.swc?url';
+// Feeding pathway (AN13B002_R -> AN05B099 -> DNge032 -> MN8). Its metadata is derived from the SWC files by
+// scripts/derive_geometry_metadata.mjs (not provided yet); replace with the real file when it arrives.
+import metaFeed from '../game_data/geometry/AN13B002-feeding/geometry_metadata_derived.json';
+import handoffFeed from '../path_jsons/math_filled/feed_AN13B002_R_handoff.json';
+import glbFeedUrl from '../game_data/geometry/AN13B002-feeding/feed_AN13B002_R.glb?url';
+import swcFeed1Url from '../game_data/geometry/AN13B002-feeding/21763.swc?url';
+import swcFeed2Url from '../game_data/geometry/AN13B002-feeding/15758.swc?url';
+import swcFeed3Url from '../game_data/geometry/AN13B002-feeding/11063.swc?url';
+import swcFeed4Url from '../game_data/geometry/AN13B002-feeding/16827.swc?url';
 
 // Branch game_turn_right test screen. Left: the DNa02_L and DNa02_R neurons, each with the motor neuron it
 // drives (anterior on the left). Right: the arena with the fly. Click a hotspot: light travels down its path,
@@ -124,10 +133,11 @@ const NAV_SPEED = 9; // world units per second
 const controls = new OrbitControls(brainPane.camera, brainPane.domElement);
 controls.enableDamping = true;
 
-// Keep the whole neuron (about 20 units long, 8 tall) in view whatever the pane's shape, by moving the
-// camera along its current line of sight. Runs on load and when the pane is resized, not while orbiting.
-const FIT_HALF_WIDTH = 12; // neuron half-length 10, plus margin
-const FIT_HALF_HEIGHT = 5;
+// Keep every neuron in view whatever the pane's shape, by moving the camera along its current line of sight.
+// Runs on load, when neurons are added (frameBrain) and when the pane is resized, not while orbiting.
+// The starting numbers fit one neuron (about 20 units long, 8 tall); frameBrain replaces them with the real extents.
+let FIT_HALF_WIDTH = 12;
+let FIT_HALF_HEIGHT = 5;
 function fitBrainCamera() {
   const el = document.getElementById('brain-pane');
   const cam = brainPane.camera;
@@ -139,6 +149,22 @@ function fitBrainCamera() {
 }
 new ResizeObserver(fitBrainCamera).observe(document.getElementById('brain-pane'));
 fitBrainCamera();
+
+// Centre the view on the neurons' bounding box and size the fit to it (plus a margin, so hotspots at the edge stay clickable).
+function frameBrain(groups) {
+  const box = new THREE.Box3();
+  groups.forEach((g) => {
+    g.updateMatrixWorld(true);
+    box.expandByObject(g);
+  });
+  const size = box.getSize(new THREE.Vector3());
+  controls.target.copy(box.getCenter(new THREE.Vector3()));
+  // The margin also covers perspective: neurons nearer the camera (+z) appear wider than the box suggests.
+  FIT_HALF_WIDTH = size.x / 2 + 3;
+  FIT_HALF_HEIGHT = size.y / 2 + 3;
+  fitBrainCamera();
+  controls.update();
+}
 
 const arena = createArena(arenaPane.scene);
 arena.configure(null);
@@ -285,8 +311,15 @@ async function boot() {
       handoff: handoffR,
       reference: metaL.normalization,
     }),
+    await createNeuronPair({
+      urls: { glb: glbFeedUrl, swc: { 21763: swcFeed1Url, 15758: swcFeed2Url, 11063: swcFeed3Url, 16827: swcFeed4Url } },
+      meta: metaFeed,
+      handoff: handoffFeed,
+      reference: metaL.normalization,
+    }),
   ];
   pairs.forEach((p) => brainPane.scene.add(p.group));
+  frameBrain(pairs.map((p) => p.group));
   const pairById = new Map(pairs.map((p) => [p.hotspotId, p]));
 
   createPicker({
