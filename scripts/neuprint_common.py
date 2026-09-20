@@ -13,6 +13,14 @@ DATASET = "male-cns:v1.0"
 OUTPUT_DIR = Path(__file__).resolve().parents[1] / "data" / "results"
 
 
+def safe_name(value: object) -> str:
+    """Convert a label to the filename-safe form used throughout the pipeline."""
+    text = str(value)
+    if value is None or text in {"", "nan", "<NA>", "NaT", "None"}:
+        text = "unknown"
+    return "".join(c if c.isalnum() or c in "-_" else "_" for c in text)
+
+
 def get_client() -> Client:
     """Create a client without ever placing a token in source code."""
     # Read the private token from the terminal environment, not from a file.
@@ -24,8 +32,6 @@ def get_client() -> Client:
 
 
 def result_dir(name: str) -> Path:
-    # Replace unsafe filename characters before creating the result folder.
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
-    path = OUTPUT_DIR / safe_name
+    path = OUTPUT_DIR / safe_name(name)
     path.mkdir(parents=True, exist_ok=True)
     return path

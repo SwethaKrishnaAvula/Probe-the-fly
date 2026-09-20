@@ -8,22 +8,16 @@ from pathlib import Path
 import pandas as pd
 from neuprint import fetch_simple_connections
 
-from neuprint_common import get_client, result_dir
+from neuprint_common import get_client, result_dir, safe_name
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 RESULTS_DIR = PROJECT_DIR / "data" / "results"
 
 
-def safe_label(value: object) -> str:
-    """Make text safe to use in a result-folder name."""
-    text = str(value) if pd.notna(value) else "unknown"
-    return "".join(char if char.isalnum() or char in "-_" else "_" for char in text)
-
-
 def load_type_neurons(cell_type: str) -> pd.DataFrame:
     """Reuse the annotations and sides already saved by step 2."""
-    neuron_file = RESULTS_DIR / safe_label(cell_type) / "neurons.csv"
+    neuron_file = RESULTS_DIR / safe_name(cell_type) / "neurons.csv"
     if not neuron_file.exists():
         raise SystemExit(
             f"Missing {neuron_file}. Run 02_find_neurons.py --type {cell_type} first."
@@ -63,10 +57,10 @@ def neuron_label(neuron: pd.Series) -> str:
     """Prefer the instance because it usually records the L/R side."""
     instance = neuron.get("instance")
     if pd.notna(instance) and str(instance).strip():
-        return safe_label(instance)
+        return safe_name(instance)
 
-    cell_type = safe_label(neuron.get("type", "neuron"))
-    side = safe_label(neuron.get("somaSide", "unknown"))
+    cell_type = safe_name(neuron.get("type", "neuron"))
+    side = safe_name(neuron.get("somaSide", "unknown"))
     return f"{cell_type}_{side}"
 
 
@@ -118,10 +112,10 @@ def output_folder(
 def review_folder(args: argparse.Namespace) -> str:
     """Choose one predictable folder for the combined parameter report."""
     if args.name:
-        return f"{safe_label(args.name)}_review"
+        return f"{safe_name(args.name)}_review"
     subject = args.type if args.type else "manual"
     behavior = args.behavior or "candidate"
-    return f"{safe_label(behavior)}_{safe_label(subject)}_review"
+    return f"{safe_name(behavior)}_{safe_name(subject)}_review"
 
 
 def parse_args() -> argparse.Namespace:

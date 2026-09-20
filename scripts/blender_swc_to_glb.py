@@ -1,8 +1,10 @@
 """Run inside Blender to convert the configured SWC neurons into one GLB."""
 
 import bpy
+import argparse
 import json
 from pathlib import Path
+import sys
 
 
 def find_project_dir():
@@ -25,14 +27,36 @@ def find_project_dir():
             return candidate
 
     raise FileNotFoundError(
-        "Could not find the steel-hacks project. Open this script from its "
-        "scripts folder, then run it again."
+        "Could not find the project root containing 00_CENTRAL_PROJECT.md. "
+        "Open this script from the project's scripts folder, then run it again."
     )
 
 
 PROJECT_DIR = find_project_dir()
-GEOMETRY_DIR = PROJECT_DIR / "game_data" / "geometry"
-CONFIG_PATH = GEOMETRY_DIR / "blender_export_config.json"
+
+
+def config_path_from_args():
+    """Return the requested config, or the shared default geometry config."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("game_data/geometry/blender_export_config.json"),
+        help="Blender export config, relative to the project root or absolute",
+    )
+
+    # Blender consumes its own arguments first. Script arguments, when used,
+    # must appear after `--`. Running from Blender's Text Editor has no `--`,
+    # so it cleanly uses the default config.
+    script_args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    config_path = parser.parse_args(script_args).config
+    if not config_path.is_absolute():
+        config_path = PROJECT_DIR / config_path
+    return config_path.resolve()
+
+
+CONFIG_PATH = config_path_from_args()
+GEOMETRY_DIR = CONFIG_PATH.parent
 
 
 def load_config():
