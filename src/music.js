@@ -6,7 +6,8 @@ import musicUrl from './assets/background-music.mp3?url';
 
 const VOLUME = 0.03; // quiet on purpose: the movement sounds (sfx.js) are laid clearly over it. (Was 0.05, and 0.14 before that.)
 const FADE_MS = 3500;
-const STORAGE_KEY = 'flybywire.music';
+const STORAGE_KEY = 'probefly.music';
+const OLD_STORAGE_KEY = 'flybywire.music'; // the game's old name: still read, so a player who turned the music off keeps it off
 
 export function createMusic() {
   const audio = new Audio(musicUrl);
@@ -16,7 +17,7 @@ export function createMusic() {
 
   let wanted = true; // does the player want music?
   try {
-    wanted = localStorage.getItem(STORAGE_KEY) !== 'off';
+    wanted = (localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(OLD_STORAGE_KEY)) !== 'off';
   } catch {
     /* storage can be blocked; music is then simply on */
   }
