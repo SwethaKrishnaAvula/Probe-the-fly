@@ -12,7 +12,7 @@ import * as THREE from 'three';
 const FLY_R = 0.42; // radius of the fly's footprint
 const BELLY = 0.1; // the fly's belly is this far above its lift
 const SOAK_LIFT = 0.1; // below this lift the fly is on the counter's level
-const MOVES = new Set(['walk_forward', 'turn_left', 'turn_right', 'approach_odor', 'escape_takeoff']);
+const MOVES = new Set(['walk_forward', 'turn_left', 'turn_right', 'approach_odor', 'escape_takeoff', 'escape_flight', 'object_track']);
 
 function overlaps(c, px, pz) {
   const cx = c.ref ? c.ref.position.x : c.cx;
@@ -33,6 +33,7 @@ export function createCollisions({ fly, runner, world, arena, say = () => {}, on
   let start = null; // where the current move took off from: { pos, rot }
   let recovering = null; // a mishap's animation is playing: { restore }
   let edgeSaid = false;
+  let prev = null; // the behavior that was running last frame: a flight that ends this frame still counts as moving
   const api = {
     enabled: true,
 
@@ -46,11 +47,14 @@ export function createCollisions({ fly, runner, world, arena, say = () => {}, on
     reset() {
       start = null;
       recovering = null;
+      prev = null;
     },
 
     update() {
       if (!api.enabled) return;
       const p = fly.object.position;
+      const wasMoving = MOVES.has(prev) || MOVES.has(runner.current);
+      prev = runner.current;
 
       if (recovering) {
         if (!runner.current) {
@@ -79,7 +83,7 @@ export function createCollisions({ fly, runner, world, arena, say = () => {}, on
       }
 
       // Solid pieces.
-      const moving = MOVES.has(runner.current);
+      const moving = wasMoving;
       for (const c of world.colliders) {
         if (belly >= c.height) continue; // flown high enough to clear it
         if (!overlaps(c, p.x, p.z)) continue;
